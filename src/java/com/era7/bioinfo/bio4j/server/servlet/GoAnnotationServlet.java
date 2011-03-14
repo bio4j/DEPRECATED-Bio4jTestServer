@@ -16,8 +16,6 @@ import com.era7.lib.communication.xml.Request;
 import com.era7.lib.communication.xml.Response;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import org.jdom.Element;
 
@@ -35,6 +33,8 @@ public class GoAnnotationServlet extends BasicServletNeo4j {
         //Logger logger = Logger.getLogger("Logger");
         //logger.log(Level.SEVERE, request.toString());
 
+        System.out.println("GoAnnotationServlet");
+
         Response response = new Response();
         String method = request.getMethod();
 
@@ -50,7 +50,7 @@ public class GoAnnotationServlet extends BasicServletNeo4j {
 
             GoAnnotationXML goAnnotationXML = GoUtil.getGoAnnotation(array, manager);
 
-            System.out.println("goAnnotationXML = " + goAnnotationXML);
+            //System.out.println("goAnnotationXML = " + goAnnotationXML);
 
             response.addChild(goAnnotationXML);
             response.setStatus(Response.SUCCESSFUL_RESPONSE);

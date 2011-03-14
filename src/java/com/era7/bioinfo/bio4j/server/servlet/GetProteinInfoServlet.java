@@ -6,6 +6,7 @@ package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.CommonData;
 import com.era7.bioinfo.bio4j.server.RequestList;
+import com.era7.bioinfo.bio4jmodel.nodes.ProteinNode;
 import com.era7.bioinfo.bio4jmodel.util.Bio4jManager;
 import com.era7.bioinfo.bio4jmodel.util.GoUtil;
 import com.era7.bioinfo.servletlibraryneo4j.servlet.BasicServletNeo4j;
@@ -14,12 +15,17 @@ import com.era7.lib.bioinfoxml.go.GoAnnotationXML;
 import com.era7.lib.communication.model.BasicSession;
 import com.era7.lib.communication.xml.Request;
 import com.era7.lib.communication.xml.Response;
+import com.era7.lib.era7xmlapi.model.XMLElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import org.jdom.Element;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.index.Index;
+import org.neo4j.graphdb.index.IndexHits;
 
 /**
  *
@@ -32,34 +38,41 @@ public class GetProteinInfoServlet extends BasicServletNeo4j {
             HttpServletRequest hsr) throws Throwable {
 
 
-        //Logger logger = Logger.getLogger("Logger");
-        //logger.log(Level.SEVERE, request.toString());
-
         Response response = new Response();
         String method = request.getMethod();
 
-        if (method.equals(RequestList.GO_ANNOTATION_REQUEST)) {
+        if (method.equals(RequestList.GET_PROTEIN_INFO_REQUEST)) {
 
             Element proteinsXml = request.getParameters().getChild("proteins");
 
             ArrayList<ProteinXML> array = new ArrayList<ProteinXML>();
             List<Element> list = proteinsXml.getChildren(ProteinXML.TAG_NAME);
             for (Element elem : list) {
+                elem.detach();
                 array.add(new ProteinXML(elem));
             }
 
-            GoAnnotationXML goAnnotationXML = GoUtil.getGoAnnotation(array, manager);
+            XMLElement proteinsResult = new XMLElement(new Element("proteins"));
 
-            System.out.println("goAnnotationXML = " + goAnnotationXML);
+            Index<Node> proteinIndex = manager.getProteinAccessionIndex();
 
-            response.addChild(goAnnotationXML);
+            for (ProteinXML protein : array) {
+                IndexHits<Node> proteinHits = proteinIndex.get(ProteinNode.PROTEIN_ACCESSION_INDEX, protein.getId());
+                if(proteinHits.hasNext()){
+                    ProteinNode protNode = new ProteinNode(proteinHits.getSingle());
+
+                }
+                
+            }
+
+
+            response.addChild(proteinsResult);
             response.setStatus(Response.SUCCESSFUL_RESPONSE);
 
         } else {
             response.setError("There is no such method");
         }
 
-        //logger.log(Level.SEVERE, response.toString());
 
         return response;
     }

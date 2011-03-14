@@ -34,6 +34,9 @@ public class GoSlimServlet extends BasicServletNeo4j {
         Response response = new Response();
         String method = request.getMethod();
 
+        System.out.println("GoSlimServlet");
+
+
         if (method.equals(RequestList.GO_SLIM_REQUEST)) {
 
             List<Element> proteinList = request.getParameters().getChild("proteins").getChildren(ProteinXML.TAG_NAME);

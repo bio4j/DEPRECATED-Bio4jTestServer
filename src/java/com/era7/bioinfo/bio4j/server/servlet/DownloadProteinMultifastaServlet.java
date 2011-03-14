@@ -19,7 +19,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import org.jdom.Element;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
+//import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.index.Index;
 
 /**
@@ -38,9 +38,9 @@ public class DownloadProteinMultifastaServlet extends BasicServletNeo4j{
 
             List<Element> proteins = request.asJDomElement().getChildren(ProteinXML.TAG_NAME);
 
-            int maxProteinsPerTxn = 1000;
-            int counter = 0;
-            Transaction txn = manager.beginTransaction();
+//            int maxProteinsPerTxn = 1000;
+//            int counter = 0;
+//            Transaction txn = manager.beginTransaction();
             //IndexService indexService = manager.getIndexService();
 
             Index<Node> proteinAccessionIndex = manager.getProteinAccessionIndex();
@@ -52,22 +52,21 @@ public class DownloadProteinMultifastaServlet extends BasicServletNeo4j{
 
                     ProteinNode proteinNode = new ProteinNode(proteinAccessionIndex.get(ProteinNode.PROTEIN_ACCESSION_INDEX, protein.getId()).getSingle());
 
-                    counter++;
-                    if(counter > maxProteinsPerTxn){
-                        counter = 0;
-                        txn.success();
-                        txn.finish();
-                        txn = manager.beginTransaction();
-                    }
+//                    counter++;
+//                    if(counter > maxProteinsPerTxn){
+//                        counter = 0;
+//                        txn.success();
+//                        txn.finish();
+//                        txn = manager.beginTransaction();
+//                    }
                 }
-                txn.success();
+//                txn.success();
             }catch(Exception e){
-                txn.failure();
+//                txn.failure();
                 response.setError(e.getMessage());
             }finally{
-                txn.finish();
-            }
-            
+//                txn.finish();
+            }            
 
 
             response.setStatus(Response.SUCCESSFUL_RESPONSE);
