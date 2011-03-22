@@ -71,7 +71,7 @@ public class DownloadGoSlimServlet extends HttpServlet {
                 SlimSetXML slimSet = new SlimSetXML(myReq.getParameters().getChild(SlimSetXML.TAG_NAME));
                 //System.out.println("slimSet = " + slimSet);
 
-                GOSlimXML goSlim = GoUtil.getGoSlim(proteinArray, slimSet, new Bio4jManager(CommonData.DATABASE_FOLDER));
+                GOSlimXML goSlim = GoUtil.getGoSlim(proteinArray, slimSet, new Bio4jManager(CommonData.DATABASE_FOLDER), null);
 
                 response.setContentType("application/x-download");
                 response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xml");

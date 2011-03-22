@@ -6,6 +6,7 @@ package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.CommonData;
 import com.era7.bioinfo.bio4j.server.RequestList;
+import com.era7.bioinfo.bio4j.server.util.Bio4jLogger;
 import com.era7.bioinfo.bio4jmodel.util.Bio4jManager;
 import com.era7.bioinfo.bio4jmodel.util.GoUtil;
 import com.era7.bioinfo.servletlibraryneo4j.servlet.BasicServletNeo4j;
@@ -45,15 +46,16 @@ public class GoAnnotationServlet extends BasicServletNeo4j {
             ArrayList<ProteinXML> array = new ArrayList<ProteinXML>();
             List<Element> list = proteinsXml.getChildren(ProteinXML.TAG_NAME);
             for (Element elem : list) {
-                array.add(new ProteinXML(elem));
+                array.add(new ProteinXML((Element)elem.clone()));
             }
 
             GoAnnotationXML goAnnotationXML = GoUtil.getGoAnnotation(array, manager);
 
-            //System.out.println("goAnnotationXML = " + goAnnotationXML);
-
             response.addChild(goAnnotationXML);
             response.setStatus(Response.SUCCESSFUL_RESPONSE);
+
+            //logging request
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(hsr, request.toString(), RequestList.GO_ANNOTATION_REQUEST));
 
         } else {
             response.setError("There is no such method");

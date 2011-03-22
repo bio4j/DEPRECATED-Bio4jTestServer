@@ -6,6 +6,7 @@ package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.CommonData;
 import com.era7.bioinfo.bio4j.server.RequestList;
+import com.era7.bioinfo.bio4j.server.util.Bio4jLogger;
 import com.era7.bioinfo.bio4jmodel.util.Bio4jManager;
 import com.era7.bioinfo.bio4jmodel.util.GoUtil;
 import com.era7.bioinfo.servletlibraryneo4j.servlet.BasicServletNeo4j;
@@ -42,15 +43,18 @@ public class GoSlimServlet extends BasicServletNeo4j {
             List<Element> proteinList = request.getParameters().getChild("proteins").getChildren(ProteinXML.TAG_NAME);
             ArrayList<ProteinXML> proteinArray = new ArrayList<ProteinXML>();
             for (Element elem : proteinList) {
-                proteinArray.add(new ProteinXML(elem));
+                proteinArray.add(new ProteinXML((Element)elem.clone()));
             }
 
             SlimSetXML slimSet = new SlimSetXML(request.getParameters().getChild(SlimSetXML.TAG_NAME));
 
-            GOSlimXML goSlim = GoUtil.getGoSlim(proteinArray, slimSet, manager);
+            GOSlimXML goSlim = GoUtil.getGoSlim(proteinArray, slimSet, manager, null);
 
             response.addChild(goSlim);
             response.setStatus(Response.SUCCESSFUL_RESPONSE);
+
+            //logging request
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(hsr, request.toString(), RequestList.GO_SLIM_REQUEST));
 
         } else {
             response.setError("There is no such method");
