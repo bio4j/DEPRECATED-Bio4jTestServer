@@ -4,4 +4,9 @@
 
   <Configure id="WebAppContext" class="org.eclipse.jetty.webapp.WebAppContext">
           <Set name="maxFormContentSize" type="int">10000000</Set>
+		  <Set name="virtualHosts">
+			<Array type="java.lang.String">
+				<Item>gotools.bio4j.com</Item>
+			</Array>
+		  </Set>
   </Configure>
