@@ -20,4 +20,6 @@ public class RequestList {
 
     public static final String GET_PROTEIN_INFO_REQUEST = "get_protein_info";
 
+    public static final String UPLOAD_BLAST_AND_GET_COVERAGE_XML_REQUEST = "upload_blast_and_get_coverage_xml";
+
 }

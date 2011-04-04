@@ -55,7 +55,7 @@ public class DownloadGoSlimServlet extends HttpServlet {
             String temp = request.getParameter(Request.TAG_NAME);
             Request myReq = new Request(temp);
 
-            System.out.println("myReq = " + myReq);
+            //System.out.println("myReq = " + myReq);
 
             if (myReq.getMethod().equals(RequestList.DOWNLOAD_GO_SLIM_REQUEST)) {
 
