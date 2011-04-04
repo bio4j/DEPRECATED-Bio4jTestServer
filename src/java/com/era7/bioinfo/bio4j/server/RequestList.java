@@ -22,4 +22,7 @@ public class RequestList {
 
     public static final String UPLOAD_BLAST_AND_GET_COVERAGE_XML_REQUEST = "upload_blast_and_get_coverage_xml";
 
+    public static final String GET_GO_ANNOTATION_CHART_XML_REQUEST = "get_go_annotation_chart_xml";
+    public static final String GET_GO_SLIM_CHART_XML_REQUEST = "get_go_slim_chart_xml";
+
 }

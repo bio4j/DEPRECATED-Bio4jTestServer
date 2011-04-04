@@ -51,7 +51,7 @@ public class UploadBlastAndGetCoverageXMLServlet extends HttpServlet {
             throws javax.servlet.ServletException, java.io.IOException {
 
 
-        System.out.println("holaaa");
+        //System.out.println("holaaa");
 
         OutputStream out = resp.getOutputStream();
 
@@ -73,24 +73,24 @@ public class UploadBlastAndGetCoverageXMLServlet extends HttpServlet {
                     out.write(response.toString().getBytes());
                 } else {
 
-                    System.out.println("all controls passed!!");
+                    //System.out.println("all controls passed!!");
 
                     FileItem fileItem = FileUploadUtilities.getFileItem(request);
                     InputStream uploadedStream = fileItem.getInputStream();
                     BufferedReader inBuff = new BufferedReader(new InputStreamReader(uploadedStream));
 
-                    System.out.println("before blastExporter");
+                    //System.out.println("before blastExporter");
 
                     String resultExport = BlastExporter.exportBlastXMLtoIsotigsCoverage(inBuff);
                     uploadedStream.close();
 
-                    System.out.println("after blastexporter");
+                    //System.out.println("after blastexporter");
 
                     String responseSt = "<response status=\"" + Response.SUCCESSFUL_RESPONSE +
                                         "\" method=\"" + RequestList.UPLOAD_BLAST_AND_GET_COVERAGE_XML_REQUEST
                                         + "\" >\n" + resultExport + "\n</response>";
 
-                    System.out.println("writing response");
+                    //System.out.println("writing response");
 
 
                     resp.setContentType("text/html");                    
@@ -100,7 +100,7 @@ public class UploadBlastAndGetCoverageXMLServlet extends HttpServlet {
                     resp.setContentLength(byteArray.length);
 
 
-                    System.out.println("doneee!!");
+                    //System.out.println("doneee!!");
 
                 }
 
