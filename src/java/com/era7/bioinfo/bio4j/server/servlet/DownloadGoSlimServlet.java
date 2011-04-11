@@ -91,7 +91,7 @@ public class DownloadGoSlimServlet extends HttpServlet {
 
 
         } catch (Exception e) {
-            out.write("Se produjo un error...".getBytes());
+            out.write("There was an error...".getBytes());
             out.write(e.getStackTrace()[0].toString().getBytes());
         }
 

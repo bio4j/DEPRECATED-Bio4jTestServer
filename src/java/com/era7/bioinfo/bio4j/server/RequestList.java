@@ -21,6 +21,7 @@ public class RequestList {
     public static final String GET_PROTEIN_INFO_REQUEST = "get_protein_info";
 
     public static final String UPLOAD_BLAST_AND_GET_COVERAGE_XML_REQUEST = "upload_blast_and_get_coverage_xml";
+    public static final String LOAD_BLAST_FILE_FROM_URL_AND_GET_COVERAGE_XML_REQUEST = "load_blast_file_from_url_and_get_coverage_xml";
 
     public static final String GET_GO_ANNOTATION_CHART_XML_REQUEST = "get_go_annotation_chart_xml";
     public static final String GET_GO_SLIM_CHART_XML_REQUEST = "get_go_slim_chart_xml";
