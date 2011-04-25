@@ -52,8 +52,6 @@ public class UploadBlastAndGetCoverageXMLServlet extends HttpServlet {
             throws javax.servlet.ServletException, java.io.IOException {
 
 
-        System.out.println("holaaa");
-
         OutputStream out = resp.getOutputStream();
 
         String temp = request.getParameter(Request.TAG_NAME);
