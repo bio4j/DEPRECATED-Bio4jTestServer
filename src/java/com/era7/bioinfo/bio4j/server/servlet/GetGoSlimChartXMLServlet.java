@@ -6,6 +6,7 @@
 package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.RequestList;
+import com.era7.bioinfo.bio4j.server.util.Bio4jLogger;
 import com.era7.bioinfo.bio4j.server.util.FileUploadUtilities;
 import com.era7.lib.communication.xml.Request;
 import com.era7.lib.communication.xml.Response;
@@ -94,6 +95,9 @@ public class GetGoSlimChartXMLServlet extends HttpServlet {
                 out.write(response.toString().getBytes());
 
             }
+            
+            //logging request
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, myReq.toString(), RequestList.GET_GO_SLIM_CHART_XML_REQUEST));
 
 
         } catch (Exception e) {

@@ -7,6 +7,7 @@ package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.CommonData;
 import com.era7.bioinfo.bio4j.server.RequestList;
+import com.era7.bioinfo.bio4j.server.util.Bio4jLogger;
 import com.era7.bioinfo.bio4jmodel.util.Bio4jManager;
 import com.era7.bioinfo.bio4jmodel.util.GoUtil;
 import com.era7.lib.bioinfoxml.ProteinXML;
@@ -82,6 +83,9 @@ public class DownloadGoAnnotationServlet extends HttpServlet {
             } else {
                 out.write("There is no such method".getBytes());
             }
+            
+            //logging request
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, myReq.toString(), RequestList.DOWNLOAD_GO_ANNOTATION_REQUEST));
 
 
 

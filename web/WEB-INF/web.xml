@@ -4,6 +4,14 @@
         <listener-class>com.era7.bioinfo.bio4j.server.listeners.MainListener</listener-class>
     </listener>
     <servlet>
+        <servlet-name>GetGoAnnotationChartXML</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGoAnnotationChartXMLServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetGoSlimChartXML</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGoSlimChartXMLServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>GoSlim</servlet-name>
         <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GoSlimServlet</servlet-class>
     </servlet>
@@ -23,6 +31,14 @@
         <servlet-name>DownloadProteinMultifasta</servlet-name>
         <servlet-class>com.era7.bioinfo.bio4j.server.servlet.DownloadProteinMultifastaServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GetGoAnnotationGexf</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGoAnnotationGexfServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GetGoAnnotationGexf</servlet-name>
+        <url-pattern>/GetGoAnnotationGexf</url-pattern>
+    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>GoSlim</servlet-name>
         <url-pattern>/GoSlim</url-pattern>
@@ -42,6 +58,14 @@
     <servlet-mapping>
         <servlet-name>DownloadProteinMultifasta</servlet-name>
         <url-pattern>/DownloadProteinMultifasta</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetGoAnnotationChartXML</servlet-name>
+        <url-pattern>/GetGoAnnotationChartXML</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetGoSlimChartXML</servlet-name>
+        <url-pattern>/GetGoSlimChartXML</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

@@ -5,6 +5,7 @@
 package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.RequestList;
+import com.era7.bioinfo.bio4j.server.util.Bio4jLogger;
 import com.era7.bioinfo.bio4j.server.util.FileUploadUtilities;
 import com.era7.lib.bioinfo.bioinfoutil.gephi.GephiExporter;
 import com.era7.lib.bioinfoxml.gexf.viz.VizColorXML;
@@ -12,10 +13,6 @@ import com.era7.lib.bioinfoxml.go.GoAnnotationXML;
 import com.era7.lib.communication.xml.Request;
 import com.era7.lib.communication.xml.Response;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -39,8 +36,6 @@ import org.gephi.io.processor.plugin.DefaultProcessor;
 import org.gephi.layout.plugin.AutoLayout;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuProportional;
-import org.gephi.layout.plugin.fruchterman.FruchtermanReingold;
-import org.gephi.layout.plugin.fruchterman.FruchtermanReingoldBuilder;
 import org.gephi.preview.api.PreviewController;
 import org.gephi.preview.api.PreviewModel;
 import org.gephi.project.api.ProjectController;
@@ -117,7 +112,13 @@ public class GetGoAnnotationGexfServlet extends HttpServlet {
                             new VizColorXML(21, 155, 241, 243),
                             true);
 
-                    //System.out.println("gexfSt = " + gexfSt);                    
+                    //System.out.println("gexfSt = " + gexfSt);
+
+                    //--------temporal-------
+//                    File tempGexfFile = new File("lalalalaasdfasd.gexf");
+//                    BufferedWriter tempOutBuff = new BufferedWriter(new FileWriter(tempGexfFile));
+//                    tempOutBuff.write(gexfSt);
+//                    tempOutBuff.close();
 
                     //--------------------------------------------------------------------------------
                     //----------------------------GEPHI TOOLKIT PART--------------------------------
@@ -128,7 +129,12 @@ public class GetGoAnnotationGexfServlet extends HttpServlet {
                     Workspace workspace = pc.getCurrentWorkspace();
                     ImportController importController = Lookup.getDefault().lookup(ImportController.class);
                     StringReader stReader = new StringReader(gexfSt);
-                    Container container = importController.importFile(stReader, importController.getFileImporter("gexf"));
+                    //System.out.println(importController.getFileImporter("gexf") == null);
+                    Container container = importController.importFile(stReader, importController.getFileImporter(".gexf"));
+                    //Container container = importController.importFile(tempGexfFile);
+
+                    //---temporal---
+                    //tempGexfFile.delete();
 
                     container.getLoader().setEdgeDefault(EdgeDefault.DIRECTED);   //Force DIRECTED
                     container.setAllowAutoNode(false);
@@ -193,6 +199,9 @@ public class GetGoAnnotationGexfServlet extends HttpServlet {
                 out.write(response.toString().getBytes());
 
             }
+            
+            //logging request
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, myReq.toString(), RequestList.GET_GO_ANNOTATION_GEXF_REQUEST));
 
 
         } catch (Exception e) {
