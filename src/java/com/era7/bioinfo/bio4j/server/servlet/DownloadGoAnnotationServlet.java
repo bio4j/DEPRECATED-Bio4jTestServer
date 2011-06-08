@@ -52,6 +52,8 @@ public class DownloadGoAnnotationServlet extends HttpServlet {
             Request myReq = new Request(request.getParameter(Request.TAG_NAME));
 
             //System.out.println("myReq = " + myReq);
+            
+            String reqSt = myReq.toString();
 
 
             if (myReq.getMethod().equals(RequestList.DOWNLOAD_GO_ANNOTATION_REQUEST)) {
@@ -85,7 +87,7 @@ public class DownloadGoAnnotationServlet extends HttpServlet {
             }
             
             //logging request
-            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, myReq.toString(), RequestList.DOWNLOAD_GO_ANNOTATION_REQUEST));
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, reqSt, RequestList.DOWNLOAD_GO_ANNOTATION_REQUEST));
 
 
 

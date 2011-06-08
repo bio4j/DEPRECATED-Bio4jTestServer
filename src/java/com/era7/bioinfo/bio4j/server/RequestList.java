@@ -27,5 +27,6 @@ public class RequestList {
     public static final String GET_GO_SLIM_CHART_XML_REQUEST = "get_go_slim_chart_xml";
 
     public static final String GET_GO_ANNOTATION_GEXF_REQUEST = "get_go_annotation_gexf";
+    public static final String GET_GO_ANNOTATION_GEXF_FROM_URL_REQUEST = "get_go_annotation_gexf_from_url";
 
 }

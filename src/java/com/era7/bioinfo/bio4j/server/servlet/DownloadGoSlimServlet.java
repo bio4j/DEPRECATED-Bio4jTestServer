@@ -57,6 +57,8 @@ public class DownloadGoSlimServlet extends HttpServlet {
             Request myReq = new Request(temp);
 
             //System.out.println("myReq = " + myReq);
+            
+            String reqSt = myReq.toString();
 
             if (myReq.getMethod().equals(RequestList.DOWNLOAD_GO_SLIM_REQUEST)) {
 
@@ -90,7 +92,7 @@ public class DownloadGoSlimServlet extends HttpServlet {
             }
             
             //logging request
-            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, myReq.toString(), RequestList.DOWNLOAD_GO_SLIM_REQUEST));
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(request, reqSt, RequestList.DOWNLOAD_GO_SLIM_REQUEST));
 
 
 

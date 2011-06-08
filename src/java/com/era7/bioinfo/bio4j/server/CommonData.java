@@ -13,7 +13,7 @@ import java.io.File;
  */
 public class CommonData {
 
-    public static final String DATABASE_FOLDER = "bio4jdb/";
+    public static final String DATABASE_FOLDER = "bio4jdb/";    
 
     private static File BIO4J_LOGS_FILE = null;
     private static final String BIO4J_LOGS_FILE_NAME = "Bio4jLogs.log";

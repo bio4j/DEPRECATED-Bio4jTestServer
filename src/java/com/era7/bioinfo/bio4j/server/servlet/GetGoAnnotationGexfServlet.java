@@ -7,6 +7,7 @@ package com.era7.bioinfo.bio4j.server.servlet;
 import com.era7.bioinfo.bio4j.server.RequestList;
 import com.era7.bioinfo.bio4j.server.util.Bio4jLogger;
 import com.era7.bioinfo.bio4j.server.util.FileUploadUtilities;
+import com.era7.bioinfo.bio4j.server.util.GephiUtil;
 import com.era7.lib.bioinfo.bioinfoutil.gephi.GephiExporter;
 import com.era7.lib.bioinfoxml.gexf.viz.VizColorXML;
 import com.era7.lib.bioinfoxml.go.GoAnnotationXML;
@@ -16,31 +17,11 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.gephi.graph.api.GraphController;
-import org.gephi.graph.api.GraphModel;
-import org.gephi.io.exporter.api.ExportController;
-import org.gephi.io.exporter.spi.CharacterExporter;
-import org.gephi.io.exporter.spi.Exporter;
-import org.gephi.io.importer.api.Container;
-import org.gephi.io.importer.api.EdgeDefault;
-import org.gephi.io.importer.api.ImportController;
-import org.gephi.io.processor.plugin.DefaultProcessor;
-import org.gephi.layout.plugin.AutoLayout;
-import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
-import org.gephi.layout.plugin.force.yifanHu.YifanHuProportional;
-import org.gephi.preview.api.PreviewController;
-import org.gephi.preview.api.PreviewModel;
-import org.gephi.project.api.ProjectController;
-import org.gephi.project.api.Workspace;
-import org.openide.util.Lookup;
 
 /**
  *
@@ -93,6 +74,10 @@ public class GetGoAnnotationGexfServlet extends HttpServlet {
                     response.setError("No file was uploaded");
                     out.write(response.toString().getBytes());
                 } else {
+                    
+                    String subOntologySt = myReq.getParameters().getChildText("sub_ontology");
+                    String algorithmLayoutSt = myReq.getParameters().getChildText("layout_algorithm");
+                    String algorithmLayoutTimeSt = myReq.getParameters().getChildText("layout_algorithm_time");
 
                     System.out.println("all controls passed!!");
 
@@ -110,69 +95,14 @@ public class GetGoAnnotationGexfServlet extends HttpServlet {
                     String gexfSt = GephiExporter.exportGoAnnotationToGexf(new GoAnnotationXML(stBuilder.toString()),
                             new VizColorXML(241, 134, 21, 255),
                             new VizColorXML(21, 155, 241, 243),
-                            true);
+                            true,
+                            false,
+                            subOntologySt);
 
-                    //System.out.println("gexfSt = " + gexfSt);
-
-                    //--------temporal-------
-//                    File tempGexfFile = new File("lalalalaasdfasd.gexf");
-//                    BufferedWriter tempOutBuff = new BufferedWriter(new FileWriter(tempGexfFile));
-//                    tempOutBuff.write(gexfSt);
-//                    tempOutBuff.close();
-
-                    //--------------------------------------------------------------------------------
                     //----------------------------GEPHI TOOLKIT PART--------------------------------
-                    //--------------------------------------------------------------------------------
 
-                    ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
-                    pc.newProject();
-                    Workspace workspace = pc.getCurrentWorkspace();
-                    ImportController importController = Lookup.getDefault().lookup(ImportController.class);
-                    StringReader stReader = new StringReader(gexfSt);
-                    //System.out.println(importController.getFileImporter("gexf") == null);
-                    Container container = importController.importFile(stReader, importController.getFileImporter(".gexf"));
-                    //Container container = importController.importFile(tempGexfFile);
-
-                    //---temporal---
-                    //tempGexfFile.delete();
-
-                    container.getLoader().setEdgeDefault(EdgeDefault.DIRECTED);   //Force DIRECTED
-                    container.setAllowAutoNode(false);
-
-                    //Append container to graph structure
-                    importController.process(container, new DefaultProcessor(), workspace);
-
-                    GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getModel();
-
-                    //Layout for 1 minute
-                    AutoLayout autoLayout = new AutoLayout(1, TimeUnit.MINUTES);
-                    autoLayout.setGraphModel(graphModel);
-                    //YifanHuLayout firstLayout = new YifanHuLayout(null, new StepDisplacement(1f));
-                    //FruchtermanReingoldBuilder fruchtermanReingoldBuilder = new FruchtermanReingoldBuilder();
-                    //FruchtermanReingold fruchtermanReingold = fruchtermanReingoldBuilder.buildLayout();
-                    //fruchtermanReingold.setArea(100000f);
-                    YifanHuLayout yifanHu = new YifanHuProportional().buildLayout();
-
-                    //yifanHu.se
-                    autoLayout.addLayout(yifanHu, 1f);
-                    //autoLayout.addLayout(fruchtermanReingold, 0.4f);
-                    autoLayout.execute();
-
-                    PreviewModel model = Lookup.getDefault().lookup(PreviewController.class).getModel();
-                    model.getNodeSupervisor().setShowNodeLabels(Boolean.TRUE);
-
-
-                    ExportController ec = Lookup.getDefault().lookup(ExportController.class);
-
-                    Exporter exporterGexf = ec.getExporter("gexf");     //Get GraphML exporter
-                    exporterGexf.setWorkspace(workspace);
-                    StringWriter gexfStringWriter = new StringWriter();
-                    ec.exportWriter(gexfStringWriter, (CharacterExporter) exporterGexf);
-
-                    //--------------------------------------------------------------------------------
-                    //--------------------------------------------------------------------------------
-
-                    String gexfResponseSt = gexfStringWriter.toString();
+                    String gexfResponseSt = GephiUtil.applyAlgorithmToGexf(gexfSt, algorithmLayoutSt, Integer.parseInt(algorithmLayoutTimeSt));  
+                    
                     gexfResponseSt = gexfResponseSt.replaceAll("<creator>Gephi 0.7</creator>", "<creator>Bio4j Go Tools</creator>");
 
                     String responseSt = "<response status=\"" + Response.SUCCESSFUL_RESPONSE

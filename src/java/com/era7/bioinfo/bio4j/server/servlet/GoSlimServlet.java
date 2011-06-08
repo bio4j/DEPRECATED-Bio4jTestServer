@@ -36,6 +36,8 @@ public class GoSlimServlet extends BasicServletNeo4j {
         String method = request.getMethod();
 
         System.out.println("GoSlimServlet");
+        
+        String reqSt = request.toString();
 
 
         if (method.equals(RequestList.GO_SLIM_REQUEST)) {
@@ -54,7 +56,7 @@ public class GoSlimServlet extends BasicServletNeo4j {
             response.setStatus(Response.SUCCESSFUL_RESPONSE);
 
             //logging request
-            Bio4jLogger.log(Bio4jLogger.createLogRecord(hsr, request.toString(), RequestList.GO_SLIM_REQUEST));
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(hsr, reqSt, RequestList.GO_SLIM_REQUEST));
 
         } else {
             response.setError("There is no such method");

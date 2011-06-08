@@ -38,6 +38,8 @@ public class GoAnnotationServlet extends BasicServletNeo4j {
 
         Response response = new Response();
         String method = request.getMethod();
+        
+        String reqSt = request.toString();
 
         if (method.equals(RequestList.GO_ANNOTATION_REQUEST)) {
 
@@ -55,7 +57,7 @@ public class GoAnnotationServlet extends BasicServletNeo4j {
             response.setStatus(Response.SUCCESSFUL_RESPONSE);
 
             //logging request
-            Bio4jLogger.log(Bio4jLogger.createLogRecord(hsr, request.toString(), RequestList.GO_ANNOTATION_REQUEST));
+            Bio4jLogger.log(Bio4jLogger.createLogRecord(hsr, reqSt, RequestList.GO_ANNOTATION_REQUEST));
 
         } else {
             response.setError("There is no such method");
