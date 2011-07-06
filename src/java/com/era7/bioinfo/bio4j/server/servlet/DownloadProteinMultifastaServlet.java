@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.era7.bioinfo.bio4j.server.servlet;
 
 import com.era7.bioinfo.bio4j.server.CommonData;
@@ -10,113 +9,126 @@ import com.era7.bioinfo.bio4jmodel.nodes.ProteinNode;
 import com.era7.bioinfo.servletlibraryneo4j.servlet.BasicServletNeo4j;
 import com.era7.bioinfo.bio4j.server.RequestList;
 import com.era7.bioinfo.bio4jmodel.util.Bio4jManager;
-import com.era7.lib.bioinfoxml.ProteinXML;
+import com.era7.bioinfo.bio4jmodel.util.NodeRetriever;
+import com.era7.lib.bioinfo.bioinfoutil.fasta.FastaUtil;
+import com.era7.lib.bioinfoxml.uniprot.ProteinXML;
 import com.era7.lib.communication.model.BasicSession;
 import com.era7.lib.communication.xml.Request;
 import com.era7.lib.communication.xml.Response;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.jdom.Element;
-import org.neo4j.graphdb.Node;
-//import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.index.Index;
 
 /**
  *
  * @author ppareja
  */
-public class DownloadProteinMultifastaServlet extends BasicServletNeo4j{
+public class DownloadProteinMultifastaServlet extends HttpServlet {
 
     @Override
-    protected Response processRequest(Request request, BasicSession session, Bio4jManager manager,
-            HttpServletRequest hsr) throws Throwable {
+    public void init() {
+    }
 
-        Response response = new Response();
+    @Override
+    public void doPost(HttpServletRequest request,
+            HttpServletResponse response)
+            throws javax.servlet.ServletException, java.io.IOException {
+        servletLogic(request, response);
 
-        if(request.getMethod().equals(RequestList.DOWNLOAD_PROTEIN_MULTIFASTA_REQUEST)){
+    }
 
-            List<Element> proteins = request.asJDomElement().getChildren(ProteinXML.TAG_NAME);
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws javax.servlet.ServletException, java.io.IOException {
+        servletLogic(request, response);
 
-//            int maxProteinsPerTxn = 1000;
-//            int counter = 0;
-//            Transaction txn = manager.beginTransaction();
-            //IndexService indexService = manager.getIndexService();
 
-            Index<Node> proteinAccessionIndex = manager.getProteinAccessionIndex();
+    }
 
-            try{
+    private void servletLogic(HttpServletRequest request, HttpServletResponse response)
+            throws javax.servlet.ServletException, java.io.IOException {
+
+
+        OutputStream out = response.getOutputStream();
+
+
+        if (request.getMethod().equals(RequestList.DOWNLOAD_PROTEIN_MULTIFASTA_REQUEST)) {
+
+            try {
+                
+                StringBuilder resultStBuilder = new StringBuilder();
+
+                Request myReq = new Request(request.getParameter(Request.TAG_NAME));
+
+                String fileName = myReq.getParameters().getChildText("file_name");
+
+                Element proteinsXml = myReq.getParameters().getChild("proteins");
+
+                List<Element> proteins = proteinsXml.getChildren(ProteinXML.TAG_NAME);
+
                 for (Element element : proteins) {
                     ProteinXML protein = new ProteinXML(element);
 
+                    NodeRetriever nodeRetriever = new NodeRetriever(new Bio4jManager(CommonData.DATABASE_FOLDER));
+                    ProteinNode proteinNode = nodeRetriever.getProteinNodeByAccession(protein.getId());
 
-                    ProteinNode proteinNode = new ProteinNode(proteinAccessionIndex.get(ProteinNode.PROTEIN_ACCESSION_INDEX, protein.getId()).getSingle());
-
-//                    counter++;
-//                    if(counter > maxProteinsPerTxn){
-//                        counter = 0;
-//                        txn.success();
-//                        txn.finish();
-//                        txn = manager.beginTransaction();
-//                    }
+                    if (proteinNode != null) {
+                        
+                        String headerSt = ">";
+                        
+                        //dataset
+                        if(proteinNode.getDataset().getName().toLowerCase().startsWith("trembl")){
+                            headerSt += "tr|";
+                        }else{
+                            headerSt += "sp|";
+                        }
+                        //accession
+                        headerSt += proteinNode.getAccession() + "|";
+                        //name + fullname
+                        headerSt += proteinNode.getName() + " " + proteinNode.getFullName() + " ";
+                        //OS=
+                        headerSt += "OS=" + proteinNode.getOrganism().getScientificName() + " ";
+                        //GN=
+                        headerSt += "GN=";
+                        String[] geneNames = proteinNode.getGeneNames();
+                        if(geneNames.length > 0){
+                            headerSt += geneNames[0];
+                        }                        
+                        
+                        resultStBuilder.append((headerSt + "\n"));
+                        resultStBuilder.append(FastaUtil.formatSequenceWithFastaFormat(proteinNode.getSequence(), 60));
+                        
+                    }
                 }
-//                txn.success();
-            }catch(Exception e){
-//                txn.failure();
-                response.setError(e.getMessage());
-            }finally{
-//                txn.finish();
-            }            
+
+                response.setContentType("application/x-download");
+                response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xml");
 
 
-            response.setStatus(Response.SUCCESSFUL_RESPONSE);
+                byte[] byteArray = resultStBuilder.toString().getBytes();
 
-        }else{
-            response.setError("No such method");
+                out.write(byteArray);
+                response.setContentLength(byteArray.length);
+
+
+            } catch (Exception e) {
+                out.write("Error...".getBytes());
+                out.write(e.getStackTrace()[0].toString().getBytes());
+            }
+
+
+        } else {
+            out.write("There is no such method".getBytes());
         }
-        
-        return response;
-    }
 
-    @Override
-    protected void logSuccessfulOperation(Request rqst, Response rspns, Bio4jManager manager,
-            BasicSession session) {
-    }
 
-    @Override
-    protected void logErrorResponseOperation(Request rqst, Response rspns, Bio4jManager manager,
-            BasicSession session) {
-    }
+        out.flush();
+        out.close();
 
-    @Override
-    protected void logErrorExceptionOperation(Request rqst, Response rspns, Throwable thrwbl, 
-            Bio4jManager manager) {
-    }
 
-    @Override
-    protected void noSession(Request request) {
     }
-    @Override
-    protected boolean checkPermissions(ArrayList<?> al, Request rqst) {
-        return true;
-    }
-
-    @Override
-    protected boolean defineCheckSessionFlag() {       return false;   }
-    @Override
-    protected boolean defineCheckPermissionsFlag() {   return false;}
-    @Override
-    protected boolean defineLoggableFlag() {    return false; }
-    @Override
-    protected boolean defineLoggableErrorsFlag() {  return false; }    
-    @Override
-    protected boolean defineUtf8CharacterEncodingRequest() {    return false; }
-    @Override
-    protected void initServlet() { }
-
-    @Override
-    protected String defineNeo4jDatabaseFolder() {
-        return CommonData.DATABASE_FOLDER;
-    }
-
 }
