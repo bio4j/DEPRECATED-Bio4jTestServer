@@ -55,14 +55,13 @@ public class DownloadProteinMultifastaServlet extends HttpServlet {
 
         OutputStream out = response.getOutputStream();
 
+        try {
 
-        if (request.getMethod().equals(RequestList.DOWNLOAD_PROTEIN_MULTIFASTA_REQUEST)) {
+            StringBuilder resultStBuilder = new StringBuilder();
 
-            try {
-                
-                StringBuilder resultStBuilder = new StringBuilder();
+            Request myReq = new Request(request.getParameter(Request.TAG_NAME));
 
-                Request myReq = new Request(request.getParameter(Request.TAG_NAME));
+            if (myReq.getMethod().equals(RequestList.DOWNLOAD_PROTEIN_MULTIFASTA_REQUEST)) {
 
                 String fileName = myReq.getParameters().getChildText("file_name");
 
@@ -73,17 +72,19 @@ public class DownloadProteinMultifastaServlet extends HttpServlet {
                 for (Element element : proteins) {
                     ProteinXML protein = new ProteinXML(element);
 
+                    System.out.println("retrieving sequence for: " + protein.getId());
+                    
                     NodeRetriever nodeRetriever = new NodeRetriever(new Bio4jManager(CommonData.DATABASE_FOLDER));
                     ProteinNode proteinNode = nodeRetriever.getProteinNodeByAccession(protein.getId());
 
                     if (proteinNode != null) {
-                        
+
                         String headerSt = ">";
-                        
+
                         //dataset
-                        if(proteinNode.getDataset().getName().toLowerCase().startsWith("trembl")){
+                        if (proteinNode.getDataset().getName().toLowerCase().startsWith("trembl")) {
                             headerSt += "tr|";
-                        }else{
+                        } else {
                             headerSt += "sp|";
                         }
                         //accession
@@ -95,18 +96,18 @@ public class DownloadProteinMultifastaServlet extends HttpServlet {
                         //GN=
                         headerSt += "GN=";
                         String[] geneNames = proteinNode.getGeneNames();
-                        if(geneNames.length > 0){
+                        if (geneNames.length > 0) {
                             headerSt += geneNames[0];
-                        }                        
-                        
+                        }
+
                         resultStBuilder.append((headerSt + "\n"));
-                        resultStBuilder.append(FastaUtil.formatSequenceWithFastaFormat(proteinNode.getSequence(), 60));
-                        
+                        resultStBuilder.append(FastaUtil.formatSequenceWithFastaFormat(proteinNode.getSequence().replaceAll(" ", ""), 60));
+
                     }
                 }
 
                 response.setContentType("application/x-download");
-                response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xml");
+                response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".fasta");
 
 
                 byte[] byteArray = resultStBuilder.toString().getBytes();
@@ -114,16 +115,17 @@ public class DownloadProteinMultifastaServlet extends HttpServlet {
                 out.write(byteArray);
                 response.setContentLength(byteArray.length);
 
-
-            } catch (Exception e) {
-                out.write("Error...".getBytes());
-                out.write(e.getStackTrace()[0].toString().getBytes());
+            } else {
+                out.write("There is no such method".getBytes());
             }
 
-
-        } else {
-            out.write("There is no such method".getBytes());
+        } catch (Exception e) {
+            out.write("Error...".getBytes());
+            out.write(e.getStackTrace()[0].toString().getBytes());
         }
+
+
+
 
 
         out.flush();
