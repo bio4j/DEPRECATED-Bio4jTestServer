@@ -13,6 +13,7 @@ public class RequestList {
 
     public static final String DOWNLOAD_PROTEIN_MULTIFASTA_REQUEST = "download_protein_multifasta";
     public static final String GET_PROTEIN_MULTIFASTA_REQUEST = "get_protein_multifasta";
+    public static final String GET_GENE_UNIPROT_ACCESSIONS_REQUEST = "get_gene_uniprot_accessions";
 
     public static final String GO_ANNOTATION_REQUEST = "go_annotation";
     public static final String GO_SLIM_REQUEST = "go_slim";
