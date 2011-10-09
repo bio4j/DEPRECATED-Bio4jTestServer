@@ -58,6 +58,8 @@ public class DownloadProteinMultifastaServlet extends HttpServlet {
             Request myReq = new Request(request.getParameter(Request.TAG_NAME));
 
             if (myReq.getMethod().equals(RequestList.DOWNLOAD_PROTEIN_MULTIFASTA_REQUEST)) {
+                
+                Bio4jManager manager = new Bio4jManager(CommonData.DATABASE_FOLDER);
 
                 String fileName = myReq.getParameters().getChildText("file_name");
 
@@ -72,7 +74,7 @@ public class DownloadProteinMultifastaServlet extends HttpServlet {
 
                     System.out.println("retrieving sequence for: " + protein.getId());
 
-                    NodeRetriever nodeRetriever = new NodeRetriever(new Bio4jManager(CommonData.DATABASE_FOLDER));
+                    NodeRetriever nodeRetriever = new NodeRetriever(manager);
                     ProteinNode proteinNode = nodeRetriever.getProteinNodeByAccession(protein.getId());
 
                     StringBuilder resultStBuilder = new StringBuilder();

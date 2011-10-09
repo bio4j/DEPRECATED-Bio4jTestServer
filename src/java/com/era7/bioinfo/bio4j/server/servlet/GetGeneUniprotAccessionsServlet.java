@@ -61,7 +61,7 @@ public class GetGeneUniprotAccessionsServlet extends BasicServletNeo4j {
                 BufferedWriter outBuff = new BufferedWriter(new FileWriter(tempFile));
                 ArrayList<String> geneNames = new ArrayList<String>();
 
-                NodeRetriever nodeRetriever = new NodeRetriever(new Bio4jManager(CommonData.DATABASE_FOLDER));
+                NodeRetriever nodeRetriever = new NodeRetriever(manager);
                 
                 System.out.println("Storing gene names...");
                 while ((line = inBuff.readLine()) != null) {
@@ -75,7 +75,7 @@ public class GetGeneUniprotAccessionsServlet extends BasicServletNeo4j {
                 int proteinsCounter = 0;
                 for (String geneName : geneNames) {                   
                     
-                    List<ProteinNode> proteins = nodeRetriever.getProteinsByGeneNames("*" + geneName + "*");                    
+                    List<ProteinNode> proteins = nodeRetriever.getProteinsByGeneNames(geneName);                    
                     
                     if(proteins.size() > 0){
                         if(proteins.size() == 1){
