@@ -89,7 +89,7 @@ public class GetGeneUniprotAccessionsServlet extends BasicServletNeo4j {
                                 ProteinNode proteinNode = proteins.get(i);
                                 if(proteinNode.getOrganism().getScientificName().equalsIgnoreCase("Homo Sapiens")){
                                     selectedProtein = proteinNode;
-                                    if(proteinNode.getDataset().getName().equalsIgnoreCase("swissprot")){
+                                    if(proteinNode.getDataset().getName().equalsIgnoreCase("swiss-prot")){
                                         break;
                                         //we don't need to keep searching (any human sprot protein is ok)
                                     }
