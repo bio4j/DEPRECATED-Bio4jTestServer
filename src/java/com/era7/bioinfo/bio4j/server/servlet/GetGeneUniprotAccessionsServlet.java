@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2010-2011  "Bio4j"
+ *
+ * This file is part of Bio4j
+ *
+ * Bio4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 package com.era7.bioinfo.bio4j.server.servlet;
 
@@ -29,8 +41,14 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- *
- * @author ppareja
+ * Maps gene names to Uniprot accessions. 
+ * Only human protein accessions are included, otherwise the gene names provided
+ * are ignored.
+ * Whenever there are more than one 'Homo Sapiens' accession ocurrence for a given gene name,
+ * the criteria followed is selecting randomly among the proteins belonging to Swiss-Prot 
+ * dataset; if there's none from Swiss-Prot, the accession is randomly selected from those
+ * belonging to Trembl.
+ * @author Pablo Pareja Tobes <ppareja@era7.com>
  */
 public class GetGeneUniprotAccessionsServlet extends BasicServletNeo4j {
 

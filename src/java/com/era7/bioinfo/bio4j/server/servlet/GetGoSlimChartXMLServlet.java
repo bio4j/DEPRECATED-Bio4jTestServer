@@ -21,7 +21,9 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 /**
- *
+ * (Not finished yet!)
+ * Returns a XML structure intended to be used as source for a GOSlim annotation chart.
+ * It expects a GoSlim XML file as parameter. 
  * @author Pablo Pareja Tobes <ppareja@era7.com>
  */
 public class GetGoSlimChartXMLServlet extends HttpServlet {
