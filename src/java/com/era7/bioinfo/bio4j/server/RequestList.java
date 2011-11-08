@@ -30,5 +30,7 @@ public class RequestList {
 
     public static final String GET_GO_ANNOTATION_GEXF_REQUEST = "get_go_annotation_gexf";
     public static final String GET_GO_ANNOTATION_GEXF_FROM_URL_REQUEST = "get_go_annotation_gexf_from_url";
+    
+    public static final String GET_CUFF_LINKS_FULL_REPORT_REQUEST = "get_cuff_links_full_report_request";
 
 }
