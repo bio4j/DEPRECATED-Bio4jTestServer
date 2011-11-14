@@ -99,10 +99,11 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                 String line = null;
 
                 File tempFile = new File(fileName);
-                BufferedWriter outBuff = new BufferedWriter(new FileWriter(tempFile));
+                BufferedWriter outBuff = new BufferedWriter(new FileWriter(tempFile + ".xml"));
                 HashMap<String, String> cuffLinkGenesMap = new HashMap<String, String>();
                 HashMap<String, String> geneProteinMap = new HashMap<String, String>();
                 HashMap<String, LinkedList<String>> proteinCuffLinkMap = new HashMap<String, LinkedList<String>>();
+                LinkedList<String> emptyCufflinks = new LinkedList<String>();
 
                 System.out.println("getting cuff links and gene names...");
 
@@ -112,7 +113,14 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                 //---getting cufflinks and gene names----------
                 while ((line = inBuff.readLine()) != null) {
                     String[] columns = line.split("\t");
-                    cuffLinkGenesMap.put(columns[0], columns[2]);
+                    String geneName = columns[2];
+                    String cuffLinkID = columns[0];
+                    if (!geneName.equals("-")) {
+                        cuffLinkGenesMap.put(cuffLinkID, geneName);
+                    } else {
+                        emptyCufflinks.add(cuffLinkID);
+                    }
+
                 }
                 inBuff.close();
                 inputStream.close();
@@ -127,7 +135,7 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                     String tempGeneName = cuffLinkGenesMap.get(cuffLinkId);
                     List<ProteinNode> proteins = nodeRetriever.getProteinsByGeneNames(tempGeneName);
 
-                    String proteinAccession = "";
+                    String proteinAccession = null;
 
                     if (proteins.size() > 0) {
                         if (proteins.size() == 1) {
@@ -154,16 +162,23 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                         }
                     }
 
-                    geneProteinMap.put(tempGeneName, proteinAccession);
+                    if (proteinAccession != null) {
 
-                    //-------filling protein --> cufflinks hashmap -----------
-                    LinkedList<String> cuffLinkedList = proteinCuffLinkMap.get(proteinAccession);
-                    if (cuffLinkedList == null) {
-                        cuffLinkedList = new LinkedList<String>();
-                        proteinCuffLinkMap.put(proteinAccession, cuffLinkedList);
+                        geneProteinMap.put(tempGeneName, proteinAccession);
+
+                        //-------filling protein --> cufflinks hashmap -----------
+                        LinkedList<String> cuffLinkedList = proteinCuffLinkMap.get(proteinAccession);
+                        if (cuffLinkedList == null) {
+                            cuffLinkedList = new LinkedList<String>();
+                            proteinCuffLinkMap.put(proteinAccession, cuffLinkedList);
+                        }
+                        cuffLinkedList.add(cuffLinkId);
+                        //---------------------------------------------------------
+
+                    } else {
+                        emptyCufflinks.add(cuffLinkId);
                     }
-                    cuffLinkedList.add(cuffLinkId);
-                    //---------------------------------------------------------
+
 
                 }
 
@@ -191,21 +206,29 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                         String tempLine = null;
                         //---changing header---
                         String header = tempBuffReader.readLine();
-                        tempOutBuff.write(header + "\t" + "CUFFLINKS_IDS");
+                        tempOutBuff.write(header + "\t" + "CUFFLINKS_IDS" + "\n");
                         while ((tempLine = tempBuffReader.readLine()) != null) {
                             tempOutBuff.write(tempLine + "\t");
                             String[] cols = tempLine.split("\t");
-                            String[] tempProts = cols[cols.length].split(",");
+                            String[] tempProts = cols[cols.length - 1].split(",");
                             for (int i = 0; i < tempProts.length; i++) {
+                                LinkedList<String> cufflinkIdsList = proteinCuffLinkMap.get(tempProts[i]);
                                 if (i != tempProts.length - 1) {
-                                    tempOutBuff.write(tempProts[i] + ",");
-                                }else{
-                                    tempOutBuff.write(tempProts[i] + "\n");
+                                    for (String cufflinkIdTemp : cufflinkIdsList) {
+                                        tempOutBuff.write(cufflinkIdTemp + ",");
+                                    }                                    
+                                } else {
+                                    for (String cufflinkIdTemp : cufflinkIdsList) {
+                                        tempOutBuff.write(cufflinkIdTemp + "\n");
+                                    }
                                 }
                             }
                         }
                         tempBuffReader.close();
                         tempOutBuff.close();
+                    } else {
+                        //delete file because we don't need it
+                        goTempFile.delete();
                     }
                 }
 
@@ -220,147 +243,173 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                     cuffLinksElement.setId(cuffLinkId);
                     cuffLinksElement.setGeneName(tempGeneName);
 
-                    ProteinXML proteinXML = new ProteinXML();
-                    cuffLinksElement.addProtein(proteinXML);
+                    if (tempProtId != null) {
+                        ProteinXML proteinXML = new ProteinXML();
+                        cuffLinksElement.addProtein(proteinXML);
 
-                    proteinXML.setId(tempProtId);
-                    //---getting protein node
-                    ProteinNode proteinNode = nodeRetriever.getProteinNodeByAccession(tempProtId);
+                        proteinXML.setId(tempProtId);
+                        //---getting protein node
+                        ProteinNode proteinNode = nodeRetriever.getProteinNodeByAccession(tempProtId);
 
-                    //---protein names---
-                    proteinXML.setProteinName(proteinNode.getName());
-                    proteinXML.setFullName(proteinNode.getFullName());
-                    proteinXML.setShortName(proteinNode.getShortName());
+                        //---protein names---
+                        proteinXML.setProteinName(proteinNode.getName());
+                        proteinXML.setFullName(proteinNode.getFullName());
+                        proteinXML.setShortName(proteinNode.getShortName());
 
-                    //---interpro---
-                    for (InterproNode interproNode : proteinNode.getInterpro()) {
-                        InterproXML interproXML = new InterproXML();
-                        interproXML.setId(interproNode.getId());
-                        interproXML.setName(interproNode.getName());
-                        proteinXML.addInterpro(interproXML);
+                        //---interpro---
+                        for (InterproNode interproNode : proteinNode.getInterpro()) {
+                            InterproXML interproXML = new InterproXML();
+                            interproXML.setId(interproNode.getId());
+                            interproXML.setInterproName(interproNode.getName());
+                            proteinXML.addInterpro(interproXML);
+                        }
+
+                        //---keywords---
+                        for (KeywordNode keywordNode : proteinNode.getKeywords()) {
+                            KeywordXML keywordXML = new KeywordXML();
+                            keywordXML.setId(keywordNode.getId());
+                            keywordXML.setKeywordName(keywordNode.getName());
+                            proteinXML.addKeyword(keywordXML);
+                        }
+
+                        //---protein-protein interactions-----
+                        for (ProteinProteinInteractionRel protProtIncInteraction : proteinNode.getProteinIncomingInteractions()) {
+                            ProteinNode pNode = new ProteinNode(protProtIncInteraction.getStartNode());
+                            ProteinXML otherProtein = new ProteinXML();
+                            otherProtein.setId(pNode.getAccession());
+                            otherProtein.setProteinName(otherProtein.getName());
+                            otherProtein.setFullName(otherProtein.getFullName());
+                            proteinXML.addProteinProteinIncomingInteraction(otherProtein);
+                        }
+                        for (ProteinProteinInteractionRel protProtOutInteraction : proteinNode.getProteinOutgoingInteractions()) {
+                            ProteinNode pNode = new ProteinNode(protProtOutInteraction.getEndNode());
+                            ProteinXML otherProtein = new ProteinXML();
+                            otherProtein.setId(pNode.getAccession());
+                            otherProtein.setProteinName(otherProtein.getName());
+                            otherProtein.setFullName(otherProtein.getFullName());
+                            proteinXML.addProteinProteinOutgoingInteraction(otherProtein);
+                        }
+                        //-----------------------------------------
+
+                        //---protein-isoform interactions-----
+                        for (ProteinIsoformInteractionRel protIsoIncInteraction : proteinNode.getIsoformIncomingInteractions()) {
+                            IsoformNode iNode = new IsoformNode(protIsoIncInteraction.getStartNode());
+                            IsoformXML isoXML = new IsoformXML();
+                            isoXML.setId(iNode.getId());
+                            String isoName = "";
+                            try{
+                                isoName = iNode.getName();
+                            }catch(Exception e){
+                                isoName = "";
+                                System.out.println("Isoform name not found for: " + isoXML.getId());
+                            }
+                            isoXML.setIsoformName(isoName);
+                            proteinXML.addProteinIsoformIncomingInteraction(isoXML);
+                        }
+                        for (ProteinIsoformInteractionRel protIsoOutInteraction : proteinNode.getIsoformOutgoingInteractions()) {
+                            IsoformNode iNode = new IsoformNode(protIsoOutInteraction.getEndNode());
+                            IsoformXML isoXML = new IsoformXML();
+                            isoXML.setId(iNode.getId());
+                            String isoName = "";
+                            try{
+                                isoName = iNode.getName();
+                            }catch(Exception e){
+                                isoName = "";
+                                System.out.println("Isoform name not found for: " + isoXML.getId());
+                            }
+                            isoXML.setIsoformName(isoName);
+                            proteinXML.addProteinIsoformOutgoingInteraction(isoXML);
+                        }
+                        //-----------------------------------------
+
+                        //----------subcellular-location----------
+                        for (SubcellularLocationNode subCellLoc : proteinNode.getSubcellularLocations()) {
+                            SubcellularLocationXML subcellularLocationXML = new SubcellularLocationXML();
+                            subcellularLocationXML.setSubcellularLocationName(subCellLoc.getName());
+                            proteinXML.addSubcellularLocation(subcellularLocationXML);
+                        }
+                        //-------------------------------------------
+
+                        //-------------active site feature----------------------
+                        for (ActiveSiteFeatureRel actFeatureRel : proteinNode.getActiveSiteFeature()) {
+                            FeatureXML actFeatureXML = new FeatureXML();
+                            actFeatureXML.setBegin(actFeatureRel.getBegin());
+                            actFeatureXML.setEnd(actFeatureRel.getEnd());
+                            actFeatureXML.setEvidence(actFeatureRel.getEvidence());
+                            actFeatureXML.setDescription(actFeatureRel.getDescription());
+                            actFeatureXML.setStatus(actFeatureRel.getStatus());
+                            actFeatureXML.setOriginal(actFeatureRel.getOriginal());
+                            actFeatureXML.setRef(actFeatureRel.getRef());
+                            actFeatureXML.setType(ActiveSiteFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
+                            proteinXML.addActiveSiteFeature(actFeatureXML);
+                        }
+                        //-------------------------------------------
+
+                        //-------------transmembrane region feature----------------------
+                        for (TransmembraneRegionFeatureRel transRegFeatureRel : proteinNode.getTransmembraneRegionFeature()) {
+                            FeatureXML trFeatureXML = new FeatureXML();
+                            trFeatureXML.setBegin(transRegFeatureRel.getBegin());
+                            trFeatureXML.setEnd(transRegFeatureRel.getEnd());
+                            trFeatureXML.setEvidence(transRegFeatureRel.getEvidence());
+                            trFeatureXML.setDescription(transRegFeatureRel.getDescription());
+                            trFeatureXML.setStatus(transRegFeatureRel.getStatus());
+                            trFeatureXML.setOriginal(transRegFeatureRel.getOriginal());
+                            trFeatureXML.setRef(transRegFeatureRel.getRef());
+                            trFeatureXML.setType(TransmembraneRegionFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
+                            proteinXML.addTransmembraneRegionFeature(trFeatureXML);
+                        }
+                        //-------------------------------------------
+
+                        //-------------splice variant feature----------------------
+                        for (SpliceVariantFeatureRel spVarFeatureRel : proteinNode.getSpliceVariantFeature()) {
+                            FeatureXML spVarFeatureXML = new FeatureXML();
+                            spVarFeatureXML.setBegin(spVarFeatureRel.getBegin());
+                            spVarFeatureXML.setEnd(spVarFeatureRel.getEnd());
+                            spVarFeatureXML.setEvidence(spVarFeatureRel.getEvidence());
+                            spVarFeatureXML.setDescription(spVarFeatureRel.getDescription());
+                            spVarFeatureXML.setStatus(spVarFeatureRel.getStatus());
+                            spVarFeatureXML.setOriginal(spVarFeatureRel.getOriginal());
+                            spVarFeatureXML.setRef(spVarFeatureRel.getRef());
+                            spVarFeatureXML.setType(SpliceVariantFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
+                            proteinXML.addSpliceVariantFeature(spVarFeatureXML);
+                        }
+                        //-------------------------------------------
+
+                        //------------signal peptide feature----------------------
+                        for (SignalPeptideFeatureRel spFeatureRel : proteinNode.getSignalPeptideFeature()) {
+                            FeatureXML spFeatureXML = new FeatureXML();
+                            spFeatureXML.setBegin(spFeatureRel.getBegin());
+                            spFeatureXML.setEnd(spFeatureRel.getEnd());
+                            spFeatureXML.setEvidence(spFeatureRel.getEvidence());
+                            spFeatureXML.setDescription(spFeatureRel.getDescription());
+                            spFeatureXML.setStatus(spFeatureRel.getStatus());
+                            spFeatureXML.setOriginal(spFeatureRel.getOriginal());
+                            spFeatureXML.setRef(spFeatureRel.getRef());
+                            spFeatureXML.setType(SignalPeptideFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
+                            proteinXML.addSignalPeptideFeature(spFeatureXML);
+                        }
+                        //-------------------------------------------
+
+                        //--article-citations-----
+                        for (ArticleNode article : proteinNode.getArticleCitations()) {
+                            ArticleXML articleXML = new ArticleXML();
+                            articleXML.setTitle(article.getTitle());
+                            articleXML.setMedlineId(article.getMedlineId());
+                            proteinXML.addArticleCitation(articleXML);
+                        }
+                        //------------------------  
                     }
 
-                    //---keywords---
-                    for (KeywordNode keywordNode : proteinNode.getKeywords()) {
-                        KeywordXML keywordXML = new KeywordXML();
-                        keywordXML.setId(keywordNode.getId());
-                        keywordXML.setKeywordName(keywordNode.getName());
-                        proteinXML.addKeyword(keywordXML);
-                    }
 
-                    //---protein-protein interactions-----
-                    for (ProteinProteinInteractionRel protProtIncInteraction : proteinNode.getProteinIncomingInteractions()) {
-                        ProteinNode pNode = new ProteinNode(protProtIncInteraction.getStartNode());
-                        ProteinXML otherProtein = new ProteinXML();
-                        otherProtein.setId(pNode.getAccession());
-                        otherProtein.setName(otherProtein.getName());
-                        otherProtein.setFullName(otherProtein.getFullName());
-                        proteinXML.addProteinProteinIncomingInteraction(proteinXML);
-                    }
-                    for (ProteinProteinInteractionRel protProtOutInteraction : proteinNode.getProteinOutgoingInteractions()) {
-                        ProteinNode pNode = new ProteinNode(protProtOutInteraction.getEndNode());
-                        ProteinXML otherProtein = new ProteinXML();
-                        otherProtein.setId(pNode.getAccession());
-                        otherProtein.setName(otherProtein.getName());
-                        otherProtein.setFullName(otherProtein.getFullName());
-                        proteinXML.addProteinProteinOutgoingInteraction(proteinXML);
-                    }
-                    //-----------------------------------------
+                    outBuff.write(cuffLinksElement.toString() + "\n");
 
-                    //---protein-isoform interactions-----
-                    for (ProteinIsoformInteractionRel protIsoIncInteraction : proteinNode.getIsoformIncomingInteractions()) {
-                        IsoformNode iNode = new IsoformNode(protIsoIncInteraction.getStartNode());
-                        IsoformXML isoXML = new IsoformXML();
-                        isoXML.setId(iNode.getId());
-                        isoXML.setIsoformName(iNode.getName());
-                        proteinXML.addProteinIsoformIncomingInteraction(isoXML);
-                    }
-                    for (ProteinIsoformInteractionRel protIsoOutInteraction : proteinNode.getIsoformOutgoingInteractions()) {
-                        IsoformNode iNode = new IsoformNode(protIsoOutInteraction.getEndNode());
-                        IsoformXML isoXML = new IsoformXML();
-                        isoXML.setId(iNode.getId());
-                        isoXML.setIsoformName(iNode.getName());
-                        proteinXML.addProteinIsoformOutgoingInteraction(isoXML);
-                    }
-                    //-----------------------------------------
+                }
 
-                    //----------subcellular-location----------
-                    for (SubcellularLocationNode subCellLoc : proteinNode.getSubcellularLocations()) {
-                        SubcellularLocationXML subcellularLocationXML = new SubcellularLocationXML();
-                        subcellularLocationXML.setSubcellularLocationName(subCellLoc.getName());
-                        proteinXML.addSubcellularLocation(subcellularLocationXML);
-                    }
-                    //-------------------------------------------
-
-                    //-------------active site feature----------------------
-                    for (ActiveSiteFeatureRel actFeatureRel : proteinNode.getActiveSiteFeature()) {
-                        FeatureXML actFeatureXML = new FeatureXML();
-                        actFeatureXML.setBegin(actFeatureRel.getBegin());
-                        actFeatureXML.setEnd(actFeatureRel.getEnd());
-                        actFeatureXML.setEvidence(actFeatureRel.getEvidence());
-                        actFeatureXML.setDescription(actFeatureRel.getDescription());
-                        actFeatureXML.setStatus(actFeatureRel.getStatus());
-                        actFeatureXML.setOriginal(actFeatureRel.getOriginal());
-                        actFeatureXML.setRef(actFeatureRel.getRef());
-                        actFeatureXML.setType(ActiveSiteFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
-                        proteinXML.addActiveSiteFeature(actFeatureXML);
-                    }
-                    //-------------------------------------------
-
-                    //-------------transmembrane region feature----------------------
-                    for (TransmembraneRegionFeatureRel transRegFeatureRel : proteinNode.getTransmembraneRegionFeature()) {
-                        FeatureXML trFeatureXML = new FeatureXML();
-                        trFeatureXML.setBegin(transRegFeatureRel.getBegin());
-                        trFeatureXML.setEnd(transRegFeatureRel.getEnd());
-                        trFeatureXML.setEvidence(transRegFeatureRel.getEvidence());
-                        trFeatureXML.setDescription(transRegFeatureRel.getDescription());
-                        trFeatureXML.setStatus(transRegFeatureRel.getStatus());
-                        trFeatureXML.setOriginal(transRegFeatureRel.getOriginal());
-                        trFeatureXML.setRef(transRegFeatureRel.getRef());
-                        trFeatureXML.setType(TransmembraneRegionFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
-                        proteinXML.addTransmembraneRegionFeature(trFeatureXML);
-                    }
-                    //-------------------------------------------
-
-                    //-------------splice variant feature----------------------
-                    for (SpliceVariantFeatureRel spVarFeatureRel : proteinNode.getSpliceVariantFeature()) {
-                        FeatureXML spVarFeatureXML = new FeatureXML();
-                        spVarFeatureXML.setBegin(spVarFeatureRel.getBegin());
-                        spVarFeatureXML.setEnd(spVarFeatureRel.getEnd());
-                        spVarFeatureXML.setEvidence(spVarFeatureRel.getEvidence());
-                        spVarFeatureXML.setDescription(spVarFeatureRel.getDescription());
-                        spVarFeatureXML.setStatus(spVarFeatureRel.getStatus());
-                        spVarFeatureXML.setOriginal(spVarFeatureRel.getOriginal());
-                        spVarFeatureXML.setRef(spVarFeatureRel.getRef());
-                        spVarFeatureXML.setType(SpliceVariantFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
-                        proteinXML.addSpliceVariantFeature(spVarFeatureXML);
-                    }
-                    //-------------------------------------------
-
-                    //------------signal peptide feature----------------------
-                    for (SignalPeptideFeatureRel spFeatureRel : proteinNode.getSignalPeptideFeature()) {
-                        FeatureXML spFeatureXML = new FeatureXML();
-                        spFeatureXML.setBegin(spFeatureRel.getBegin());
-                        spFeatureXML.setEnd(spFeatureRel.getEnd());
-                        spFeatureXML.setEvidence(spFeatureRel.getEvidence());
-                        spFeatureXML.setDescription(spFeatureRel.getDescription());
-                        spFeatureXML.setStatus(spFeatureRel.getStatus());
-                        spFeatureXML.setOriginal(spFeatureRel.getOriginal());
-                        spFeatureXML.setRef(spFeatureRel.getRef());
-                        spFeatureXML.setType(SignalPeptideFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
-                        proteinXML.addSignalPeptideFeature(spFeatureXML);
-                    }
-                    //-------------------------------------------
-
-                    //--article-citations-----
-                    for (ArticleNode article : proteinNode.getArticleCitations()) {
-                        ArticleXML articleXML = new ArticleXML();
-                        articleXML.setTitle(article.getTitle());
-                        articleXML.setMedlineId(article.getMedlineId());
-                        proteinXML.addArticleCitation(articleXML);
-                    }
-                    //------------------------                    
-
+                //-----adding also the empty ones to the final report-----
+                for (String emptyCufflink : emptyCufflinks) {
+                    CuffLinksElement cuffLinksElement = new CuffLinksElement();
+                    cuffLinksElement.setId(emptyCufflink);
+                    outBuff.write(cuffLinksElement.toString() + "\n");
                 }
 
                 outBuff.write("</cuff_links_elements>");
