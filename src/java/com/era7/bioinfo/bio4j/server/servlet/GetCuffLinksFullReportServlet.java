@@ -138,10 +138,11 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
 
 
                 for (String cuffLinkId : cuffLinkGenesMap.keySet()) {
-
+                    
+                    
                     String tempGeneName = cuffLinkGenesMap.get(cuffLinkId);
-                    List<ProteinNode> proteins = nodeRetriever.getProteinsByGeneNames(tempGeneName);
-
+                    List<ProteinNode> proteins = nodeRetriever.getProteinsByGeneNames(tempGeneName);                    
+                    
                     String proteinAccession = null;
 
                     if (proteins.size() > 0) {
@@ -243,9 +244,13 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                 //===========================================================================
 
                 for (String cuffLinkId : cuffLinkGenesMap.keySet()) {
+                    
+                    outTsvBuff.write(cuffLinkId + "\t");
 
                     String tempGeneName = cuffLinkGenesMap.get(cuffLinkId);
                     String tempProtId = geneProteinMap.get(tempGeneName);
+                    
+                    outTsvBuff.write(tempGeneName + "\t");
 
                     CuffLinksElement cuffLinksElement = new CuffLinksElement();
                     cuffLinksElement.setId(cuffLinkId);
@@ -258,28 +263,50 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                         proteinXML.setId(tempProtId);
                         //---getting protein node
                         ProteinNode proteinNode = nodeRetriever.getProteinNodeByAccession(tempProtId);
+                        
+                        outTsvBuff.write(tempProtId + "\t");
 
+                        String protName,protFullName,protShortName;
+                        protName = proteinNode.getName();
+                        protFullName = proteinNode.getFullName();
+                        protShortName = proteinNode.getShortName();
+                        
                         //---protein names---
-                        proteinXML.setProteinName(proteinNode.getName());
-                        proteinXML.setFullName(proteinNode.getFullName());
-                        proteinXML.setShortName(proteinNode.getShortName());
-
+                        proteinXML.setProteinName(protName);
+                        proteinXML.setFullName(protFullName);
+                        proteinXML.setShortName(protShortName);              
+                        
+                        outTsvBuff.write(protName + "," + protFullName + "," + protShortName + "\t");                        
+                        
+                        String interproSt = "";
                         //---interpro---
                         for (InterproNode interproNode : proteinNode.getInterpro()) {
                             InterproXML interproXML = new InterproXML();
                             interproXML.setId(interproNode.getId());
                             interproXML.setInterproName(interproNode.getName());
                             proteinXML.addInterpro(interproXML);
+                            interproSt += "{" + interproXML.getId() + "," + interproXML.getInterproName() + "},";
                         }
+                        if(interproSt.length() > 1){
+                            interproSt = interproSt.substring(0, interproSt.length() - 1);
+                        }
+                        outTsvBuff.write(interproSt + "\t");
 
+                        String keywordsSt = "";
                         //---keywords---
                         for (KeywordNode keywordNode : proteinNode.getKeywords()) {
                             KeywordXML keywordXML = new KeywordXML();
                             keywordXML.setId(keywordNode.getId());
                             keywordXML.setKeywordName(keywordNode.getName());
                             proteinXML.addKeyword(keywordXML);
+                            keywordsSt += "{" + keywordXML.getId() + "," + keywordXML.getKeywordName() + "},";
                         }
+                        if(keywordsSt.length() > 1){
+                            keywordsSt = keywordsSt.substring(0, keywordsSt.length() - 1);
+                        }
+                        outTsvBuff.write(keywordsSt + "\t");
 
+                        String protProtIncIntSt = "";
                         //---protein-protein interactions-----
                         for (ProteinProteinInteractionRel protProtIncInteraction : proteinNode.getProteinIncomingInteractions()) {
                             ProteinNode pNode = new ProteinNode(protProtIncInteraction.getStartNode());
@@ -287,19 +314,33 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             otherProtein.setId(pNode.getAccession());
                             otherProtein.setProteinName(pNode.getName());
                             otherProtein.setFullName(pNode.getFullName());
+                            protProtIncIntSt += pNode.getAccession() + ",";
                             proteinXML.addProteinProteinIncomingInteraction(otherProtein);
                         }
+                        if(protProtIncIntSt.length() > 1){
+                            protProtIncIntSt = protProtIncIntSt.substring(0, protProtIncIntSt.length() - 1);
+                        }
+                        outTsvBuff.write(protProtIncIntSt + "\t");
+                        
+                        String protProtOutIntSt = "";
                         for (ProteinProteinInteractionRel protProtOutInteraction : proteinNode.getProteinOutgoingInteractions()) {
                             ProteinNode pNode = new ProteinNode(protProtOutInteraction.getEndNode());
                             ProteinXML otherProtein = new ProteinXML();
                             otherProtein.setId(pNode.getAccession());
                             otherProtein.setProteinName(pNode.getName());
                             otherProtein.setFullName(pNode.getFullName());
+                            protProtOutIntSt += pNode.getAccession() + ",";
                             proteinXML.addProteinProteinOutgoingInteraction(otherProtein);
                         }
+                        if(protProtOutIntSt.length() > 1){
+                            protProtOutIntSt = protProtOutIntSt.substring(0, protProtOutIntSt.length() - 1);
+                        }
+                        outTsvBuff.write(protProtOutIntSt + "\t");
                         //-----------------------------------------
+                        
 
                         //---protein-isoform interactions-----
+                        String protIsoIncIntSt = "";
                         for (ProteinIsoformInteractionRel protIsoIncInteraction : proteinNode.getIsoformIncomingInteractions()) {
                             IsoformNode iNode = new IsoformNode(protIsoIncInteraction.getStartNode());
                             IsoformXML isoXML = new IsoformXML();
@@ -312,8 +353,16 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                                 System.out.println("Isoform name not found for: " + isoXML.getId());
                             }
                             isoXML.setIsoformName(isoName);
+                            protIsoIncIntSt += "{" + isoXML.getId() + "," + isoXML.getIsoformName() + "},";
                             proteinXML.addProteinIsoformIncomingInteraction(isoXML);
                         }
+                        if(protIsoIncIntSt.length() > 1){
+                            protIsoIncIntSt = protIsoIncIntSt.substring(0, protIsoIncIntSt.length() - 1);
+                        }
+                        outTsvBuff.write(protIsoIncIntSt + "\t");
+                        
+                        
+                        String protIsoOutIntSt = "";
                         for (ProteinIsoformInteractionRel protIsoOutInteraction : proteinNode.getIsoformOutgoingInteractions()) {
                             IsoformNode iNode = new IsoformNode(protIsoOutInteraction.getEndNode());
                             IsoformXML isoXML = new IsoformXML();
@@ -326,19 +375,31 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                                 System.out.println("Isoform name not found for: " + isoXML.getId());
                             }
                             isoXML.setIsoformName(isoName);
+                            protIsoOutIntSt += "{" + isoXML.getId() + "," + isoXML.getIsoformName() + "},";
                             proteinXML.addProteinIsoformOutgoingInteraction(isoXML);
                         }
+                        if(protIsoOutIntSt.length() > 1){
+                            protIsoOutIntSt = protIsoOutIntSt.substring(0, protIsoOutIntSt.length() - 1);
+                        }
+                        outTsvBuff.write(protIsoOutIntSt + "\t");
                         //-----------------------------------------
 
+                        String subCellSt = "";
                         //----------subcellular-location----------
                         for (SubcellularLocationNode subCellLoc : proteinNode.getSubcellularLocations()) {
                             SubcellularLocationXML subcellularLocationXML = new SubcellularLocationXML();
                             subcellularLocationXML.setSubcellularLocationName(subCellLoc.getName());
                             proteinXML.addSubcellularLocation(subcellularLocationXML);
+                            subCellSt += subcellularLocationXML.getSubcellularLocationName() + ",";
                         }
+                        if(subCellSt.length() > 1){
+                            subCellSt = subCellSt.substring(0, subCellSt.length() - 1);
+                        }
+                        outTsvBuff.write(subCellSt + "\t");
                         //-------------------------------------------
 
                         //-------------active site feature----------------------
+                        String activeSitesSt = "";
                         for (ActiveSiteFeatureRel actFeatureRel : proteinNode.getActiveSiteFeature()) {
                             FeatureXML actFeatureXML = new FeatureXML();
                             if(!actFeatureRel.getBegin().isEmpty()){
@@ -354,10 +415,21 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             actFeatureXML.setRef(actFeatureRel.getRef());
                             actFeatureXML.setType(ActiveSiteFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
                             proteinXML.addActiveSiteFeature(actFeatureXML);
+                            
+                            activeSitesSt += "{" + actFeatureXML.getBegin() + "," + actFeatureXML.getEnd() + ","
+                                           + actFeatureXML.getEvidence() + "," + actFeatureXML.getDescription() + "," +
+                                            actFeatureXML.getStatus() + "," + actFeatureXML.getOriginal() + "," 
+                                            + actFeatureXML.getRef() + "," + actFeatureXML.getType() + "},";
+                            
                         }
+                        if(activeSitesSt.length() > 1){
+                            activeSitesSt = activeSitesSt.substring(0, activeSitesSt.length() - 1);
+                        }
+                        outTsvBuff.write(activeSitesSt + "\t");
                         //-------------------------------------------
 
                         //-------------transmembrane region feature----------------------
+                        String transRegSt = "";
                         for (TransmembraneRegionFeatureRel transRegFeatureRel : proteinNode.getTransmembraneRegionFeature()) {
                             FeatureXML trFeatureXML = new FeatureXML();
                             if(!transRegFeatureRel.getBegin().isEmpty()){
@@ -373,10 +445,20 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             trFeatureXML.setRef(transRegFeatureRel.getRef());
                             trFeatureXML.setType(TransmembraneRegionFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
                             proteinXML.addTransmembraneRegionFeature(trFeatureXML);
+                            
+                            activeSitesSt += "{" + trFeatureXML.getBegin() + "," + trFeatureXML.getEnd() + ","
+                                           + trFeatureXML.getEvidence() + "," + trFeatureXML.getDescription() + "," +
+                                            trFeatureXML.getStatus() + "," + trFeatureXML.getOriginal() + "," 
+                                            + trFeatureXML.getRef() + "," + trFeatureXML.getType() + "},";
                         }
+                        if(transRegSt.length() > 1){
+                            transRegSt = transRegSt.substring(0, transRegSt.length() - 1);
+                        }
+                        outTsvBuff.write(transRegSt + "\t");
                         //-------------------------------------------
 
                         //-------------splice variant feature----------------------
+                        String spliceVarSt = "";
                         for (SpliceVariantFeatureRel spVarFeatureRel : proteinNode.getSpliceVariantFeature()) {
                             FeatureXML spVarFeatureXML = new FeatureXML();
                             if(!spVarFeatureRel.getBegin().isEmpty()){
@@ -392,10 +474,20 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             spVarFeatureXML.setRef(spVarFeatureRel.getRef());
                             spVarFeatureXML.setType(SpliceVariantFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
                             proteinXML.addSpliceVariantFeature(spVarFeatureXML);
+                            
+                            spliceVarSt += "{" + spVarFeatureXML.getBegin() + "," + spVarFeatureXML.getEnd() + ","
+                                           + spVarFeatureXML.getEvidence() + "," + spVarFeatureXML.getDescription() + "," +
+                                            spVarFeatureXML.getStatus() + "," + spVarFeatureXML.getOriginal() + "," 
+                                            + spVarFeatureXML.getRef() + "," + spVarFeatureXML.getType() + "},";
                         }
+                        if(spliceVarSt.length() > 1){
+                            spliceVarSt = spliceVarSt.substring(0, spliceVarSt.length() - 1);
+                        }
+                        outTsvBuff.write(spliceVarSt + "\t");
                         //-------------------------------------------
 
                         //------------signal peptide feature----------------------
+                        String signalPepSt = "";
                         for (SignalPeptideFeatureRel spFeatureRel : proteinNode.getSignalPeptideFeature()) {
                             FeatureXML spFeatureXML = new FeatureXML();
                             if(!spFeatureRel.getBegin().isEmpty()){
@@ -411,21 +503,39 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             spFeatureXML.setRef(spFeatureRel.getRef());
                             spFeatureXML.setType(SignalPeptideFeatureRel.UNIPROT_ATTRIBUTE_TYPE_VALUE);
                             proteinXML.addSignalPeptideFeature(spFeatureXML);
+                            
+                            spliceVarSt += "{" + spFeatureXML.getBegin() + "," + spFeatureXML.getEnd() + ","
+                                           + spFeatureXML.getEvidence() + "," + spFeatureXML.getDescription() + "," +
+                                            spFeatureXML.getStatus() + "," + spFeatureXML.getOriginal() + "," 
+                                            + spFeatureXML.getRef() + "," + spFeatureXML.getType() + "},";
+                            
                         }
+                        if(signalPepSt.length() > 1){
+                            signalPepSt = signalPepSt.substring(0, signalPepSt.length() - 1);
+                        }
+                        outTsvBuff.write(signalPepSt + "\t");
                         //-------------------------------------------
 
                         //--article-citations-----
+                        String articlesSt = "";
                         for (ArticleNode article : proteinNode.getArticleCitations()) {
                             ArticleXML articleXML = new ArticleXML();
                             articleXML.setTitle(article.getTitle());
                             articleXML.setMedlineId(article.getMedlineId());
                             proteinXML.addArticleCitation(articleXML);
+                            articlesSt += "{" + articleXML.getTitle() + "," + articleXML.getMedlineId() + "},";
                         }
+                        if(articlesSt.length() > 1){
+                            articlesSt = articlesSt.substring(0, articlesSt.length() - 1);
+                        }
+                        outTsvBuff.write(articlesSt + "\t");
                         //------------------------  
                     }
 
 
                     outBuff.write(cuffLinksElement.toString() + "\n");
+                    outTsvBuff.write("\n");
+                    
 
                 }
 
@@ -438,17 +548,25 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
 
                 outBuff.write("</cuff_links_elements>");
                 outBuff.close();
+                
+                outTsvBuff.close();
 
                 System.out.println("done!");
 
                 System.out.println("Uploading file to S3...");
 
-                //uploading file				
+                //uploading xml file				
                 AmazonS3Client s3Client = new AmazonS3Client(CredentialsRetriever.getBasicAWSCredentialsFromOurAMI());
                 S3FileUploader.uploadEveryFileToS3Bucket(tempFile, bucketName, "", s3Client, false);
-                System.out.println("Deleting temporal file...");
-                //deleting temp file
+                System.out.println("Deleting temporal xml file...");
+                //deleting temp xml file
                 tempFile.delete();
+                
+                //uploading tsv file
+                S3FileUploader.uploadEveryFileToS3Bucket(tsvTempFile, bucketName, "", s3Client, false);
+                System.out.println("Deleting temporal tsv file...");
+                //deleting temp tsv file
+                tsvTempFile.delete();
 
                 //--uploading go files---
                 for (File file : filesToBeUploaded) {
