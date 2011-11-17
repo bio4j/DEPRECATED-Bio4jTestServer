@@ -55,18 +55,18 @@ public class CufflinksBasicQualityControlServlet extends BasicServletNeo4j {
 
         if (method.equals(RequestList.CUFFLINKS_QUALITY_CONTROL_REQUEST)) {
 
-            String diffFileUrl = request.getParameters().getChildText("diff_file");
-            String xmlFileUrl = request.getParameters().getChildText("xml_file");
-            String tsvFileUrl = request.getParameters().getChildText("tsv_file");
-            String goBioProcFileUrl = request.getParameters().getChildText("go_bio_proc_file");
-            String goCellCompProcFileUrl = request.getParameters().getChildText("go_cell_comp_file");
-            String goMolFuncFileUrl = request.getParameters().getChildText("go_mol_func_file");
+            String diffFileName = request.getParameters().getChildText("diff_file");
+            String xmlFileName = request.getParameters().getChildText("xml_file");
+            String tsvFileName = request.getParameters().getChildText("tsv_file");
+            String goBioProcFileName = request.getParameters().getChildText("go_bio_proc_file");
+            String goCellCompProcFileName = request.getParameters().getChildText("go_cell_comp_file");
+            String goMolFuncFileName = request.getParameters().getChildText("go_mol_func_file");
             String inputBucketName = request.getParameters().getChildText("input_bucket_name");
             String outputBucketName = request.getParameters().getChildText("output_bucket_name");
             String qualityResultsFileName = request.getParameters().getChildText("results_file");
 
             HashMap<String, String> xlocsGeneNamesMap = new HashMap<String, String>();
-            HashMap<String, String> xlocsProteinMap = new HashMap<String, String>();
+            HashSet<String> xlocsFoundInXML = new HashSet<String>();
             HashSet<String> xlocsFoundInTSV = new HashSet<String>();
             
             int xlocsDiffFileCounter = 0;
@@ -74,16 +74,16 @@ public class CufflinksBasicQualityControlServlet extends BasicServletNeo4j {
             
             File outputFile = new File(qualityResultsFileName);
             BufferedWriter outBuff = new BufferedWriter(new FileWriter(outputFile));
-            outBuff.write("Starting quality control for files:\n" + "1. " + diffFileUrl + "\n2. " + xmlFileUrl + 
-                    "\n3. " + tsvFileUrl + "\n4. " + goBioProcFileUrl + "\n5. " + goCellCompProcFileUrl + 
-                    "\n6. " + goMolFuncFileUrl + "\n");
+            outBuff.write("Starting quality control for files:\n" + "1. " + diffFileName + "\n2. " + xmlFileName + 
+                    "\n3. " + tsvFileName + "\n4. " + goBioProcFileName + "\n5. " + goCellCompProcFileName + 
+                    "\n6. " + goMolFuncFileName + "\n");
             outBuff.write("All these files should be available in the bucket: " + inputBucketName + "\n");
             outBuff.write("This quality control file will be generated in the bucket: " + outputBucketName + "\n");
 
             AmazonS3Client s3Client = new AmazonS3Client(CredentialsRetriever.getBasicAWSCredentialsFromOurAMI());
 
             //---diff file---
-            InputStream in = S3FileDownloader.getS3FileInputStream(diffFileUrl, inputBucketName, s3Client);
+            InputStream in = S3FileDownloader.getS3FileInputStream(diffFileName, inputBucketName, s3Client);
             BufferedReader inBuff = new BufferedReader(new InputStreamReader(in));
             String line = null;
 
@@ -102,22 +102,22 @@ public class CufflinksBasicQualityControlServlet extends BasicServletNeo4j {
             in.close();
 
             //-----xml file----
-            in = S3FileDownloader.getS3FileInputStream(xmlFileUrl, inputBucketName, s3Client);
+            in = S3FileDownloader.getS3FileInputStream(xmlFileName, inputBucketName, s3Client);
             inBuff = new BufferedReader(new InputStreamReader(in));
             
             while ((line = inBuff.readLine()) != null) {
                 if(line.startsWith("<cufflinks_element>")){
                     xlocsXMLFileCounter++;
                     CuffLinksElement cuffLinksElement = new CuffLinksElement(line);
-                    ProteinXML proteinXML = new ProteinXML(cuffLinksElement.asJDomElement().getChild(ProteinXML.TAG_NAME));
-                    xlocsProteinMap.put(cuffLinksElement.getId(), proteinXML.getId());
+                    //ProteinXML proteinXML = new ProteinXML(cuffLinksElement.asJDomElement().getChild(ProteinXML.TAG_NAME));
+                    xlocsFoundInXML.add(cuffLinksElement.getId());
                 }
             }
             inBuff.close();
             in.close();
             
             //-----tsv file----
-            in = S3FileDownloader.getS3FileInputStream(tsvFileUrl, inputBucketName, s3Client);
+            in = S3FileDownloader.getS3FileInputStream(tsvFileName, inputBucketName, s3Client);
             inBuff = new BufferedReader(new InputStreamReader(in));
             inBuff.readLine();//skipping the header
             while ((line = inBuff.readLine()) != null) {
@@ -130,6 +130,20 @@ public class CufflinksBasicQualityControlServlet extends BasicServletNeo4j {
             boolean success = true;
             for (String xlocId : xlocsGeneNamesMap.keySet()) {
                 if(!xlocsFoundInTSV.contains(xlocId)){
+                    outBuff.write(xlocId + " not found :( \n");        
+                    success = false;
+                }
+            }
+            if(!success){
+                outBuff.write("\nFAILED !!!!");
+            }else{
+                outBuff.write("\n OK !! :)");
+            }    
+            
+            outBuff.write("\nPerforming check: Every XLOC identifier found in the input diff file must be present in the XML file...\n");
+            success = true;
+            for (String xlocId : xlocsGeneNamesMap.keySet()) {
+                if(!xlocsFoundInXML.contains(xlocId)){
                     outBuff.write(xlocId + " not found :(");        
                     success = false;
                 }
@@ -138,11 +152,104 @@ public class CufflinksBasicQualityControlServlet extends BasicServletNeo4j {
                 outBuff.write("\nFAILED !!!!");
             }else{
                 outBuff.write("\n OK !! :)");
-            }           
+            }      
+            
+            outBuff.write("\nPerforming check (Biological process GO file): There must be as many protein ids as the protein frequency listed in the GO reports, (the same for XLOCs freq and ids)...\n");
+            success = true;
+            //-----biological process GO file----
+            in = S3FileDownloader.getS3FileInputStream(goBioProcFileName, inputBucketName, s3Client);
+            inBuff = new BufferedReader(new InputStreamReader(in));
+            inBuff.readLine(); //skipping header line
+            while ((line = inBuff.readLine()) != null) {
+                String[] columns = line.split("\t");
+                
+                int numberOfProteins = Integer.parseInt(columns[2]);
+                int proteinsFound = columns[3].split(",").length;                
+                if(numberOfProteins != proteinsFound){
+                    outBuff.write("Proteins found and number of proteins expected don't coincide for GO term: " + columns[0] + "\n");
+                    success = false;
+                }
+                
+                int numberOfGenes = Integer.parseInt(columns[5]);
+                int genesFound = columns[4].split(",").length;
+                if(numberOfGenes != genesFound){
+                    outBuff.write("Genes found and number of genes expected don't coincide for GO term: " + columns[0] + "\n");
+                    success = false;
+                }
+            }
+            inBuff.close();
+            in.close();
+            if(!success){
+                outBuff.write("\nFAILED !!!!");
+            }else{
+                outBuff.write("\n OK !! :)");
+            } 
+            
+            outBuff.write("\nPerforming check (Cellular component GO file): There must be as many protein ids as the protein frequency listed in the GO reports, (the same for XLOCs freq and ids)...\n");
+            success = true;
+            //-----biological process GO file----
+            in = S3FileDownloader.getS3FileInputStream(goCellCompProcFileName, inputBucketName, s3Client);
+            inBuff = new BufferedReader(new InputStreamReader(in));
+            inBuff.readLine(); //skipping header line
+            while ((line = inBuff.readLine()) != null) {
+                String[] columns = line.split("\t");
+                
+                int numberOfProteins = Integer.parseInt(columns[2]);
+                int proteinsFound = columns[3].split(",").length;
+                if(numberOfProteins != proteinsFound){
+                    outBuff.write("Proteins found and number of proteins expected don't coincide for GO term: " + columns[0] + "\n");
+                    success = false;
+                }
+                
+                int numberOfGenes = Integer.parseInt(columns[5]);
+                int genesFound = columns[4].split(",").length;
+                if(numberOfGenes != genesFound){
+                    outBuff.write("Genes found and number of genes expected don't coincide for GO term: " + columns[0] + "\n");
+                    success = false;
+                }
+            }
+            inBuff.close();
+            in.close();
+            if(!success){
+                outBuff.write("\nFAILED !!!!");
+            }else{
+                outBuff.write("\n OK !! :)");
+            } 
+            
+            outBuff.write("\nPerforming check (Molecular function GO file): There must be as many protein ids as the protein frequency listed in the GO reports, (the same for XLOCs freq and ids)...\n");
+            success = true;
+            //-----biological process GO file----
+            in = S3FileDownloader.getS3FileInputStream(goMolFuncFileName, inputBucketName, s3Client);
+            inBuff = new BufferedReader(new InputStreamReader(in));
+            inBuff.readLine(); //skipping header line
+            while ((line = inBuff.readLine()) != null) {
+                String[] columns = line.split("\t");
+                
+                int numberOfProteins = Integer.parseInt(columns[2]);
+                int proteinsFound = columns[3].split(",").length;
+                if(numberOfProteins != proteinsFound){
+                    outBuff.write("Proteins found and number of proteins expected don't coincide for GO term: " + columns[0] + "\n");
+                    success = false;
+                }
+                
+                int numberOfGenes = Integer.parseInt(columns[5]);
+                int genesFound = columns[4].split(",").length;
+                if(numberOfGenes != genesFound){
+                    outBuff.write("Genes found and number of genes expected don't coincide for GO term: " + columns[0] + "\n");
+                    success = false;
+                }
+            }
+            inBuff.close();
+            in.close();
+            if(!success){
+                outBuff.write("\nFAILED !!!!");
+            }else{
+                outBuff.write("\n OK !! :)");
+            } 
             
             outBuff.close();
             
-            S3FileUploader.uploadEveryFileToS3Bucket(outputFile, outputBucketName, null, s3Client, false);
+            S3FileUploader.uploadEveryFileToS3Bucket(outputFile, outputBucketName, "", s3Client, false);
             
             //deleting temp file
             outputFile.delete();

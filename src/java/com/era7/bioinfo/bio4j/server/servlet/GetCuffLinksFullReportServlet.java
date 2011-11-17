@@ -98,10 +98,15 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
 //                URL url = new URL(urlSt);
 //                InputStream inputStream = url.openStream();
                 
-                String inputBucketNameSt = request.getParameters().getChildText("input_bucket");
-                String outputBucketNameSt = request.getParameters().getChildText("output_bucket");
+                String inputBucketNameSt = request.getParameters().getChildText("input_bucket_name");
+                String outputBucketNameSt = request.getParameters().getChildText("output_bucket_name");
                 String inputFileNameSt = request.getParameters().getChildText("input_file_name");
                 String outputFileNameSt = request.getParameters().getChildText("output_file_name");
+                
+                System.out.println("outputFileNameSt = " + outputFileNameSt);
+                System.out.println("inputFileNameSt = " + inputFileNameSt);
+                System.out.println("inputBucketNameSt = " + inputBucketNameSt);
+                System.out.println("outputBucketNameSt = " + outputBucketNameSt);
 
                 NodeRetriever nodeRetriever = new NodeRetriever(manager);
 
@@ -206,12 +211,14 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                     proteins.add(tempProt);
                 }
                 GoAnnotationXML goAnnotationXML = GoUtil.getGoAnnotation(proteins, manager);
-                List<File> goResultFiles = GOExporter.calculateFrequenciesAndExportToFiles(goAnnotationXML, inputFileNameSt);
+                List<File> goResultFiles = GOExporter.calculateFrequenciesAndExportToFiles(goAnnotationXML, inputFileNameSt.split("\\.")[0]);
                 System.out.println("done!");
 
                 //=========modifying go reports (including cufflink ids info)=================
                 List<File> filesToBeUploaded = new LinkedList<File>();
+                
                 for (File goTempFile : goResultFiles) {
+                    
                     if (goTempFile.getName().toLowerCase().indexOf("freq") > 0) {
 
                         File tempOutFile = new File(goTempFile.getName().split("\\.")[0] + ".tsv");
@@ -244,6 +251,7 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                                         cufflinksIdsCounter++;
                                     }
                                     tempOutBuff.write(cufflinkIdsList.get(cufflinkIdsList.size() - 1) + "\t");
+                                    cufflinksIdsCounter++;
                                 }
                             }
                             
@@ -563,6 +571,8 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                     CuffLinksElement cuffLinksElement = new CuffLinksElement();
                     cuffLinksElement.setId(emptyCufflink);
                     outBuff.write(cuffLinksElement.toString() + "\n");
+                    
+                    outTsvBuff.write(cuffLinksElement.getId() + "\n");
                 }
 
                 outBuff.write("</cuff_links_elements>");
