@@ -4,6 +4,22 @@
         <listener-class>com.era7.bioinfo.bio4j.server.listeners.MainListener</listener-class>
     </listener>
     <servlet>
+        <servlet-name>DownloadProteinMultifasta</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.DownloadProteinMultifastaServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetCuffLinksFullReport</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetCuffLinksFullReportServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>CufflinksBasicQualityControl</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.qcontrol.CufflinksBasicQualityControlServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetProteinMultifasta</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetProteinMultifastaServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>GetGoAnnotationChartXML</servlet-name>
         <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGoAnnotationChartXMLServlet</servlet-class>
     </servlet>
@@ -28,16 +44,44 @@
         <servlet-class>com.era7.bioinfo.bio4j.server.servlet.DownloadGoSlimServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>DownloadProteinMultifasta</servlet-name>
-        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.DownloadProteinMultifastaServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>GetGoAnnotationGexf</servlet-name>
         <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGoAnnotationGexfServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GetGoAnnotationGexfFromUrl</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGoAnnotationGexfFromUrlServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetGeneUniprotAccessions</servlet-name>
+        <servlet-class>com.era7.bioinfo.bio4j.server.servlet.GetGeneUniprotAccessionsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CufflinksBasicQualityControl</servlet-name>
+        <url-pattern>/CufflinksBasicQualityControl</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetCuffLinksFullReport</servlet-name>
+        <url-pattern>/GetCuffLinksFullReport</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetGeneUniprotAccessions</servlet-name>
+        <url-pattern>/GetGeneUniprotAccessions</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DownloadProteinMultifasta</servlet-name>
+        <url-pattern>/DownloadProteinMultifasta</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetProteinMultifasta</servlet-name>
+        <url-pattern>/GetProteinMultifasta</url-pattern>
+    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>GetGoAnnotationGexf</servlet-name>
         <url-pattern>/GetGoAnnotationGexf</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetGoAnnotationGexfFromUrl</servlet-name>
+        <url-pattern>/GetGoAnnotationGexfFromUrl</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>GoSlim</servlet-name>
@@ -54,10 +98,6 @@
     <servlet-mapping>
         <servlet-name>DownloadGoSlim</servlet-name>
         <url-pattern>/DownloadGoSlim</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>DownloadProteinMultifasta</servlet-name>
-        <url-pattern>/DownloadProteinMultifasta</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>GetGoAnnotationChartXML</servlet-name>
