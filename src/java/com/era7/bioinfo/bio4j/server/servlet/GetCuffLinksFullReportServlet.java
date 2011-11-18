@@ -263,6 +263,8 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                                 }
                             }
                             
+                            cufflinksIdsAndCounterSt += cufflinksIdsCounter;
+                            
                             //----writing gene names-----
                             String genesSt = "";
                             for (String tempGeneNAme : tempGeneNamesSet) {
@@ -271,7 +273,7 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             tempOutBuff.write(genesSt.substring(0,genesSt.length() - 1) + "\t");
                             
                             //---writing value for cufflinks freq column----
-                            tempOutBuff.write(cufflinksIdsAndCounterSt + cufflinksIdsCounter + "\n");
+                            tempOutBuff.write(cufflinksIdsAndCounterSt + "\n");
                             
                         }
                         
