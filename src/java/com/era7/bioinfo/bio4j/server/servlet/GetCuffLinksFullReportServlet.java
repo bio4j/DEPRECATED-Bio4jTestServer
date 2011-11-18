@@ -61,6 +61,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -228,7 +229,7 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                         String tempLine = null;
                         //---changing header---
                         String header = tempBuffReader.readLine();
-                        tempOutBuff.write(header + "\t" + "CUFFLINKS_IDS" + "\t" + "NUMBER_OF_GENES" + "\n");
+                        tempOutBuff.write(header + "\t" + "GENE_NAMES" + "\t" + "CUFFLINKS_IDS" + "\t" + "NUMBER_OF_CUFFLINKS_GENES" + "\n");
                         
                         while ((tempLine = tempBuffReader.readLine()) != null) {
                             
@@ -238,25 +239,39 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                             
                             int cufflinksIdsCounter = 0;
                             
+                            String cufflinksIdsAndCounterSt = "";
+                            
+                            HashSet<String> tempGeneNamesSet = new HashSet<String>();
+                            
                             for (int i = 0; i < tempProts.length; i++) {
                                 LinkedList<String> cufflinkIdsList = proteinCuffLinkMap.get(tempProts[i]);
                                 if (i != tempProts.length - 1) {
                                     for (String cufflinkIdTemp : cufflinkIdsList) {
-                                        tempOutBuff.write(cufflinkIdTemp + ",");
+                                        cufflinksIdsAndCounterSt += cufflinkIdTemp + ",";
                                         cufflinksIdsCounter++;
+                                        tempGeneNamesSet.add(cuffLinkGenesMap.get(cufflinkIdTemp));
                                     }                                    
                                 } else {
                                     for (int j=0; j < cufflinkIdsList.size() - 1; j++) {
-                                        tempOutBuff.write(cufflinkIdsList.get(j) + ",");
+                                        cufflinksIdsAndCounterSt += cufflinkIdsList.get(j) + ",";
                                         cufflinksIdsCounter++;
+                                        tempGeneNamesSet.add(cuffLinkGenesMap.get(cufflinkIdsList.get(j)));
                                     }
-                                    tempOutBuff.write(cufflinkIdsList.get(cufflinkIdsList.size() - 1) + "\t");
+                                    cufflinksIdsAndCounterSt += cufflinkIdsList.get(cufflinkIdsList.size() - 1) + "\t";
                                     cufflinksIdsCounter++;
+                                    tempGeneNamesSet.add(cuffLinkGenesMap.get(cufflinkIdsList.get(cufflinkIdsList.size() - 1)));
                                 }
                             }
                             
+                            //----writing gene names-----
+                            String genesSt = "";
+                            for (String tempGeneNAme : tempGeneNamesSet) {
+                                genesSt += tempGeneNAme + ",";
+                            }
+                            tempOutBuff.write(genesSt.substring(0,genesSt.length() - 1) + "\t");
+                            
                             //---writing value for cufflinks freq column----
-                            tempOutBuff.write(cufflinksIdsCounter + "\n");
+                            tempOutBuff.write(cufflinksIdsAndCounterSt + cufflinksIdsCounter + "\n");
                             
                         }
                         
@@ -568,6 +583,7 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
 
                 //-----adding also the empty ones to the final report-----
                 for (String emptyCufflink : emptyCufflinks) {
+                    
                     CuffLinksElement cuffLinksElement = new CuffLinksElement();
                     cuffLinksElement.setId(emptyCufflink);
                     outBuff.write(cuffLinksElement.toString() + "\n");
