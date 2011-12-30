@@ -118,7 +118,10 @@ public class GetGeneUniprotAccessionsServlet extends BasicServletNeo4j {
                             }
                             
                             if(selectedProtein != null){
-                                outBuff.write(geneName + "\t" + selectedProtein.getAccession() + "\n");
+                                //first we get rid of the slashes we put for scaping the dashes so that 
+                                //lucene interpreted the strings correctly
+                                String tempGeneName = geneName.replaceAll("\\\\","");
+                                outBuff.write(tempGeneName + "\t" + selectedProtein.getAccession() + "\n");
                             }
                             
                             
