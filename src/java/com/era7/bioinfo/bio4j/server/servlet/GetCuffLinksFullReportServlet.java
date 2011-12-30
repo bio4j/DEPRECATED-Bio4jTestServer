@@ -279,10 +279,10 @@ public class GetCuffLinksFullReportServlet extends BasicServletNeo4j {
                         
                         tempBuffReader.close();
                         tempOutBuff.close();
-                    } else {
-                        //delete file because we don't need it
-                        goTempFile.delete();
                     }
+                    //delete file because we don't need it
+                    goTempFile.delete();
+                    
                 }
 
                 //===========================================================================

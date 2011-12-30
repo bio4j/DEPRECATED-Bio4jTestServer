@@ -83,7 +83,10 @@ public class GetGeneUniprotAccessionsServlet extends BasicServletNeo4j {
                 
                 System.out.println("Storing gene names...");
                 while ((line = inBuff.readLine()) != null) {
-                    geneNames.add(line.trim());
+                    String[] columns = line.trim().split(",");
+                    for (String columnSt : columns) {
+                        geneNames.add(columnSt.replaceAll("\\-", "\\\\-"));
+                    }                    
                 }
                 inBuff.close();
                 inputStream.close();
