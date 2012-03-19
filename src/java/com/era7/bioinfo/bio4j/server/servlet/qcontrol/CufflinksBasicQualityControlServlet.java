@@ -25,7 +25,6 @@ import com.era7.bioinfo.bioinfoaws.s3.S3FileUploader;
 import com.era7.bioinfo.bioinfoaws.util.CredentialsRetriever;
 import com.era7.bioinfo.servletlibraryneo4j.servlet.BasicServletNeo4j;
 import com.era7.lib.bioinfoxml.cufflinks.CuffLinksElement;
-import com.era7.lib.bioinfoxml.uniprot.ProteinXML;
 import com.era7.lib.communication.model.BasicSession;
 import com.era7.lib.communication.xml.Request;
 import com.era7.lib.communication.xml.Response;
